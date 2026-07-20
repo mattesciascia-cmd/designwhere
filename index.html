@@ -412,8 +412,11 @@
     .card-grid{grid-template-columns:1fr!important;padding:20px!important;gap:16px!important;}
     .grow{padding:0!important;}
 
-    .floating-panel{max-width:calc(100% - 100px);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
+    /* backdrop-filter (like transform) creates a containing block for position:fixed descendants —
+       dropping it here keeps #catMenu's fixed positioning truly viewport-relative on mobile */
+    .floating-panel{max-width:calc(100% - 100px);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;backdrop-filter:none;background:rgba(250,248,245,.98);}
     .floating-panel::-webkit-scrollbar{display:none;height:0;}
+    .cat-menu{position:fixed!important;top:auto;left:auto;}
     .legend{display:none;}
     #mapCanvas .floating-panel[style*="right:32px"]{display:none;}
 
@@ -1467,7 +1470,18 @@
       var menu = document.getElementById(id);
       var wasOpen = menu.classList.contains('open');
       document.querySelectorAll('.mobile-menu.open,.cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
-      if(!wasOpen) menu.classList.add('open');
+      if(!wasOpen){
+        menu.classList.add('open');
+        // on mobile the menu is position:fixed (its wrapper clips overflow-y for the
+        // horizontal filter scroller), so it needs its position computed from the button
+        if(window.matchMedia('(max-width:760px)').matches){
+          var btnRect = menuBtn.getBoundingClientRect();
+          menu.style.top = (btnRect.bottom + 8) + 'px';
+          menu.style.left = Math.min(btnRect.left, window.innerWidth - menu.offsetWidth - 16) + 'px';
+        } else {
+          menu.style.top = ''; menu.style.left = '';
+        }
+      }
       return;
     }
     var pin = e.target.closest('.pin[data-place]');
