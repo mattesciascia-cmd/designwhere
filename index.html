@@ -305,6 +305,8 @@
   #mapPanel{animation:panelPop .32s var(--ease);position:absolute;z-index:8;}
   #mapCanvas.map-zoomed{cursor:grab;}
   #mapCanvas.map-zoomed:active{cursor:grabbing;}
+  #mapScaleWrap, #mapScaleWrap *{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none;}
+  #mapScaleWrap img{pointer-events:none;}
   @keyframes panelPop{from{opacity:.5;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 
   /* ===================== FILTER / MENU / PANEL WIDGETS ===================== */
@@ -515,7 +517,7 @@
           <div style="position:relative;height:828px;overflow:hidden;background:#EFE6D6;" id="mapCanvas">
           <div class="map-scale-wrap" id="mapScaleWrap" style="position:absolute;inset:0;width:1440px;height:828px;transform-origin:top left;">
             <!-- real map: OpenStreetMap/CARTO tiles, precisely georeferenced to these districts -->
-            <img src="images/dubai-map.jpg" alt="Map of Dubai showing Al Quoz, Business Bay, DIFC, d3 and Jumeirah" style="position:absolute;inset:0;width:1440px;height:828px;object-fit:cover;" aria-hidden="true">
+            <img src="images/dubai-map.jpg" alt="Map of Dubai showing Al Quoz, Business Bay, DIFC, d3 and Jumeirah" style="position:absolute;inset:0;width:1440px;height:828px;object-fit:cover;-webkit-user-drag:none;user-select:none;" aria-hidden="true" draggable="false" ondragstart="return false;">
             <div style="position:absolute;right:10px;bottom:6px;font-size:9px;color:rgba(20,17,14,.45);z-index:2;">© OpenStreetMap contributors © CARTO</div>
 
             <!-- district zones -->
@@ -1064,6 +1066,16 @@
     document.getElementById('mpInside').innerHTML = renderInsideList(p.inside, p.district, p.img);
   }
 
+  // shows a place on the map AND opens the detail panel — used by pin taps and any flow
+  // (like an AI Concierge suggestion) that should land the user directly on that place
+  function selectMapPlace(id){
+    showPlace(id);
+    document.querySelectorAll('.pin.is-selected').forEach(function(p){ p.classList.remove('is-selected'); });
+    document.querySelector('.pin[data-place="' + id + '"]')?.classList.add('is-selected');
+    document.getElementById('mapPanel').classList.add('open');
+    var mps = document.getElementById('mapPanelScrim'); if(mps) mps.classList.add('open');
+  }
+
   function openPlacePanel(card){
     var cat = card.getAttribute('data-cat');
     document.getElementById('ppPhoto').className = 'photo ' + card.getAttribute('data-photo-class');
@@ -1384,7 +1396,7 @@
     var promptChip = e.target.closest('[data-prompt]');
     if(promptChip){ e.preventDefault(); sendPrompt(promptChip.getAttribute('data-prompt'), promptChip.textContent); return; }
     var chatCard = e.target.closest('.chat-card[data-place]');
-    if(chatCard){ switchFrame('map-desktop'); setTimeout(function(){ showPlace(chatCard.getAttribute('data-place')); }, 50); return; }
+    if(chatCard){ switchFrame('map-desktop'); setTimeout(function(){ selectMapPlace(chatCard.getAttribute('data-place')); }, 50); return; }
     var addSched = e.target.closest('[data-add-schedule]');
     if(addSched){
       e.preventDefault();
@@ -1459,14 +1471,7 @@
       return;
     }
     var pin = e.target.closest('.pin[data-place]');
-    if(pin){
-      showPlace(pin.getAttribute('data-place'));
-      document.querySelectorAll('.pin.is-selected').forEach(function(p){ p.classList.remove('is-selected'); });
-      pin.classList.add('is-selected');
-      document.getElementById('mapPanel').classList.add('open');
-      var mps = document.getElementById('mapPanelScrim'); if(mps) mps.classList.add('open');
-      return;
-    }
+    if(pin){ selectMapPlace(pin.getAttribute('data-place')); return; }
     var card = e.target.closest('.card[data-place-card]');
     if(card){ openPlacePanel(card); return; }
     var closePanel = e.target.closest('[data-close-panel]');
@@ -1669,6 +1674,7 @@
     // mouse drag-to-pan on desktop, only meaningful once zoomed in past the base fit-to-width scale
     var mouseDragStart = null, mouseDidDrag = false;
     canvas.addEventListener('mousedown', function(e){
+      if(mapZoom > MAP_ZOOM_MIN) e.preventDefault(); // stop native image drag-out/text-selection from hijacking the gesture
       mouseDragStart = {x:e.clientX, y:e.clientY, panX:mapPanX, panY:mapPanY};
       mouseDidDrag = false;
     });
