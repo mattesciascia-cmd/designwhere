@@ -234,8 +234,8 @@
   #app.ready{opacity:1;}
 
   /* ===================== FLUID FRAME TRANSITIONS ===================== */
-  .frame{opacity:0;transform:translateY(10px) scale(.997);transition:opacity .4s var(--ease),transform .4s var(--ease);}
-  .frame.active.enter{opacity:1;transform:translateY(0) scale(1);}
+  .frame{opacity:0;transition:opacity .4s var(--ease);}
+  .frame.active.enter{opacity:1;}
 
   /* ===================== TOAST ===================== */
   .toast{position:fixed;left:50%;bottom:36px;transform:translate(-50%,16px);background:var(--ink);color:var(--paper);
@@ -287,6 +287,9 @@
     opacity:0;pointer-events:none;transition:opacity .15s var(--ease),transform .15s var(--ease);z-index:12;
   }
   .pin:hover::after{opacity:1;transform:translateX(-50%) translateY(0);}
+  .pin.is-selected{z-index:9;}
+  .pin.is-selected .head{width:21px;height:21px;border-width:3px;box-shadow:0 0 0 6px rgba(20,17,14,.16),0 4px 10px rgba(20,17,14,.4);}
+  .pin.is-selected::after{opacity:1;transform:translateX(-50%) translateY(0);background:var(--ink);}
   @keyframes pinPulse{0%,100%{box-shadow:0 0 0 0 rgba(51,82,60,.35);}50%{box-shadow:0 0 0 9px rgba(51,82,60,0);}}
   .pin.event .head{animation:pinPulse 2.2s ease-in-out infinite;}
   #mapPanel{animation:panelPop .32s var(--ease);position:absolute;z-index:8;}
@@ -378,11 +381,10 @@
     .frame-desktop>div[style*="height:828px"]:not(#mapCanvas){height:auto!important;max-height:none!important;overflow-y:visible!important;}
     .frame-desktop>div>div[style*="height:100%"]{height:auto!important;max-height:none!important;overflow-y:visible!important;}
 
-    .topnav{flex-wrap:wrap;height:auto;padding:12px 16px;row-gap:10px;column-gap:10px;}
+    .topnav{flex-wrap:wrap;height:auto;padding:12px 12px;row-gap:10px;column-gap:10px;}
     .topnav .brand .tag{display:none;}
-    .topnav nav{order:3;width:100%;gap:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
-    .topnav nav::-webkit-scrollbar{height:0;}
-    .topnav nav a{white-space:nowrap;font-size:12.5px;}
+    .topnav nav{order:3;width:100%;gap:0;justify-content:space-between;overflow-x:visible;}
+    .topnav nav a{white-space:nowrap;font-size:10.8px;padding:4px 0;}
     .topnav .actions{margin-left:auto;}
     .topnav .actions .signin{display:none;}
     .topnav .actions .btn-primary{padding:9px 16px;font-size:12px;}
@@ -402,6 +404,16 @@
     #mapPanel,.slide-panel{width:100%!important;}
     .slide-panel{position:fixed!important;top:0!important;bottom:0!important;height:100vh!important;}
     .event-overlay,.ticket-overlay{position:fixed!important;}
+
+    #mapPanel{
+      position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
+      height:64vh!important;max-height:64vh;border-left:none!important;border-top:1px solid var(--line);
+      border-radius:18px 18px 0 0!important;box-shadow:0 -14px 34px rgba(20,17,14,.22)!important;
+      transform:translateY(102%);transition:transform .32s var(--ease);z-index:60;
+    }
+    #mapPanel.open{transform:translateY(0);}
+    #mapPanelClose{display:flex!important;}
+    #mapPanelScrim{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;z-index:59;}
     .event-overlay aside{width:100%!important;}
     .ticket-card{width:92vw!important;max-width:390px;}
     .tutorial-card{width:88vw;max-width:420px;padding:28px 24px 22px;}
@@ -453,7 +465,7 @@
     <div class="tutorial-step" data-step="3">
       <div class="eyebrow-label" style="margin-bottom:10px;">4 of 4 · Ask the concierge</div>
       <div style="font-family:var(--font-display);font-size:26px;margin-bottom:12px;letter-spacing:-.01em;">Not sure where to start?</div>
-      <p style="font-size:13.5px;line-height:1.65;color:var(--ink-soft);">The AI Concierge builds a route from a single prompt. Tap one of its suggestion chips and watch the recommendations render as real, tappable places.</p>
+      <p style="font-size:13.5px;line-height:1.65;color:var(--ink-soft);">The <a href="#" data-tutorial-link="concierge-desktop" style="color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:2px;">AI Concierge</a> builds a route from a single prompt. Tap one of its suggestion chips and watch the recommendations render as real, tappable places.</p>
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:18px;">You can reopen this any time from the (i) in the corner.</p>
     </div>
 
@@ -520,9 +532,9 @@
             <div class="pin" data-place="artjameel" data-category="Creative spaces" data-name="Art Jameel" data-status="closed" data-type="place" style="left:1011px;top:74px;"><div class="head" style="background:var(--cat-creative);"></div></div>
             <div class="pin" data-place="villasette" data-category="Insiders" data-name="Villa Sette — invite only" data-status="invite" data-type="place" style="left:575px;top:216px;"><div class="head" style="background:var(--cat-insiders);"></div></div>
 
-            <!-- selected pin: Lawrie Shabibi, distinguished + event pin nearby -->
+            <!-- default-selected pin: Lawrie Shabibi + event pin nearby -->
             <div class="pin" data-place="lawrie" data-category="Galleries" data-name="Lawrie Shabibi" data-status="open" data-type="place" style="left:430px;top:770px;">
-              <div class="head" style="background:var(--cat-galleries);border-color:var(--ink);box-shadow:0 0 0 4px rgba(20,17,14,.14),0 2px 5px rgba(20,17,14,.3);"></div>
+              <div class="head" style="background:var(--cat-galleries);"></div>
             </div>
             <div class="pin event" data-name="Rooftop Sessions — event" data-status="open" data-type="event" data-toast="Rooftop Sessions — Music &amp; live · 20 Nov · Free entry, just show up" style="left:405px;top:700px;"><div class="head" style="background:var(--cat-hospitality);"></div></div>
           </div>
@@ -573,7 +585,9 @@
             </div>
 
             <!-- detail side panel (populated dynamically — click any pin) -->
+            <div class="scrim panel-scrim" id="mapPanelScrim" data-close-map-panel></div>
             <aside id="mapPanel" style="position:absolute;right:0;top:0;bottom:0;width:400px;background:var(--paper);border-left:1px solid var(--line);box-shadow:-16px 0 32px rgba(20,17,14,.08);overflow-y:auto;">
+              <button class="icon-btn" id="mapPanelClose" data-close-map-panel style="display:none;position:absolute;top:14px;right:14px;z-index:3;background:rgba(250,248,245,.9);">✕</button>
               <div class="photo" id="mpPhoto" style="height:220px;">
                 <span class="photo-tag" id="mpTag"></span>
               </div>
@@ -758,7 +772,8 @@
               <h2 id="expName" style="font-family:var(--font-display);font-weight:600;font-size:26px;margin:0 0 6px;letter-spacing:-.01em;"></h2>
               <div id="expSchedule" style="font-size:13px;color:var(--ink-soft);margin-bottom:16px;"></div>
               <p id="expDesc" style="font-size:13.5px;line-height:1.65;color:var(--ink-soft);margin:0 0 22px;"></p>
-              <button class="btn btn-primary btn-block" id="expCta" style="padding:14px;"></button>
+              <button class="btn btn-primary btn-block" id="expCta" style="padding:14px;margin-bottom:10px;"></button>
+              <button class="btn btn-ghost btn-block" id="expAddSchedule" data-add-schedule style="padding:13px;display:none;">Add to schedule</button>
             </div>
           </aside>
         </section>
@@ -823,18 +838,7 @@
               <p style="font-size:13.5px;color:var(--ink-soft);max-width:380px;margin:0 auto 20px;line-height:1.6;">Nothing on your schedule yet — RSVP to an event or exhibition and it lands here automatically.</p>
               <button class="btn btn-primary" data-goto="map-desktop">Go to the map</button>
             </div>
-            <div id="scheduleList" style="display:none;max-width:640px;">
-              <div class="eyebrow-label" style="margin-bottom:12px;">16 November</div>
-              <div class="flex" style="gap:14px;align-items:center;padding:16px;border:1px solid var(--line);border-radius:var(--r-md);cursor:pointer;" id="scheduleEarthbound">
-                <div class="photo ph-earthbound" style="width:64px;height:64px;border-radius:8px;flex-shrink:0;"></div>
-                <div class="grow">
-                  <div style="font-size:13px;font-weight:600;">Earthbound — Collective exhibition</div>
-                  <div style="font-size:11.5px;color:var(--ink-soft);">19:00–22:00 · Isola Space</div>
-                </div>
-                <span class="chip chip-district">Al Quoz</span>
-                <span class="chip" style="background:rgba(20,20,20,.08);color:var(--ink);">Confirmed ✓</span>
-              </div>
-            </div>
+            <div id="scheduleList" style="display:none;max-width:640px;"></div>
           </div>
           </div>
         </section>
@@ -989,7 +993,9 @@
       img:'ph-villasette', inside:[]}
   };
 
-  function renderInsideList(inside){
+  function slugify(str){ return String(str).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+
+  function renderInsideList(inside, district, photo){
     if(!inside || !inside.length){
       return '<div style="font-size:12.5px;color:var(--ink-faint);padding:10px 2px;">Nothing on right now.</div>';
     }
@@ -997,7 +1003,12 @@
       var action = ev.mode === 'rsvp'
         ? '<button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px;flex-shrink:0;" data-open-event="before">RSVP</button>'
         : ev.mode === 'free'
-          ? '<span class="chip" style="background:var(--paper-deep);color:var(--ink-soft);font-size:10.5px;flex-shrink:0;">Free entry</span>'
+          ? '<span class="flex" style="gap:8px;align-items:center;flex-shrink:0;">'+
+              '<span class="chip" style="background:var(--paper-deep);color:var(--ink-soft);font-size:10.5px;">Free entry</span>'+
+              '<button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px;" data-add-schedule '+
+                'data-sched-id="'+slugify(ev.name)+'" data-sched-name="'+ev.name+'" data-sched-meta="'+ev.meta+'" '+
+                'data-sched-district="'+(district || '')+'" data-sched-photo="'+(photo || '')+'" data-sched-date="Design Week">Add to schedule</button>'+
+            '</span>'
           : '<button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px;flex-shrink:0;" data-toast="Full event detail lands in the next pass">Instant RSVP</button>';
       return '<div class="flex" style="gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:var(--r-sm);">'+
         '<div class="grow"><div style="font-size:13px;font-weight:600;">'+ev.name+'</div><div style="font-size:11.5px;color:var(--ink-soft);">'+ev.meta+'</div></div>'+
@@ -1019,7 +1030,7 @@
     var statusEl = document.getElementById('mpStatus');
     statusEl.className = p.status === 'open' ? 'status-open' : 'status-closed';
     statusEl.innerHTML = '<span class="dot"></span>' + p.hours;
-    document.getElementById('mpInside').innerHTML = renderInsideList(p.inside);
+    document.getElementById('mpInside').innerHTML = renderInsideList(p.inside, p.district, p.img);
   }
 
   function openPlacePanel(card){
@@ -1035,7 +1046,7 @@
     statusEl.innerHTML = '<span class="dot"></span>' + card.getAttribute('data-status-text');
     var placeId = card.getAttribute('data-place');
     var placeData = placeId ? MAP_PLACES[placeId] : null;
-    document.getElementById('ppInside').innerHTML = renderInsideList(placeData ? placeData.inside : []);
+    document.getElementById('ppInside').innerHTML = renderInsideList(placeData ? placeData.inside : [], card.getAttribute('data-district'), card.getAttribute('data-photo-class'));
     document.getElementById('placePanel').classList.add('open');
     document.querySelectorAll('.panel-scrim').forEach(function(s){ s.classList.add('open'); });
   }
@@ -1199,12 +1210,22 @@
     document.getElementById('expDesc').textContent = card.getAttribute('data-desc');
     var cta = document.getElementById('expCta');
     var access = card.getAttribute('data-access');
+    var addBtn = document.getElementById('expAddSchedule');
     if(access === 'Free'){
       cta.textContent = 'Free — just show up';
       cta.setAttribute('data-toast', "You're set — no booking needed for this one.");
+      addBtn.style.display = '';
+      var name = card.getAttribute('data-name');
+      addBtn.setAttribute('data-sched-id', 'exp-' + slugify(name));
+      addBtn.setAttribute('data-sched-name', name);
+      addBtn.setAttribute('data-sched-meta', card.getAttribute('data-schedule') || '');
+      addBtn.setAttribute('data-sched-district', card.getAttribute('data-district') || '');
+      addBtn.setAttribute('data-sched-photo', card.getAttribute('data-photo-class') || '');
+      addBtn.setAttribute('data-sched-date', 'Design Week');
     } else {
       cta.textContent = 'Reserve a spot';
       cta.setAttribute('data-toast', 'Booking arrives in the compliance pass.');
+      addBtn.style.display = 'none';
     }
     document.getElementById('placePanel').classList.remove('open');
     document.getElementById('expPanel').classList.add('open');
@@ -1275,23 +1296,45 @@
 
   // ===================== MY SCHEDULE =====================
   function getSchedule(){
-    try { return JSON.parse(localStorage.getItem('dw_schedule') || '[]'); } catch(e){ return []; }
+    try {
+      var list = JSON.parse(localStorage.getItem('dw_schedule') || '[]');
+      // migrate legacy string-id entries (pre-multi-item schedule) into objects
+      return list.map(function(it){ return typeof it === 'string' ? {id:it} : it; });
+    } catch(e){ return []; }
   }
-  function addToSchedule(id){
+  function addToSchedule(id, meta){
     var list = getSchedule();
-    if(list.indexOf(id) === -1){ list.push(id); localStorage.setItem('dw_schedule', JSON.stringify(list)); }
+    if(!list.some(function(it){ return it.id === id; })){
+      list.push(Object.assign({id:id}, meta || {}));
+      localStorage.setItem('dw_schedule', JSON.stringify(list));
+    }
     renderSchedule();
   }
   function renderSchedule(){
     var list = getSchedule();
-    var hasEarthbound = list.indexOf('earthbound') > -1;
     var emptyEl = document.getElementById('scheduleEmpty');
     var listEl = document.getElementById('scheduleList');
     if(!emptyEl || !listEl) return;
-    emptyEl.style.display = hasEarthbound ? 'none' : 'block';
-    listEl.style.display = hasEarthbound ? 'block' : 'none';
+    var hasItems = list.length > 0;
+    emptyEl.style.display = hasItems ? 'none' : 'block';
+    listEl.style.display = hasItems ? 'block' : 'none';
     var upcoming = document.getElementById('statUpcoming');
-    if(upcoming) upcoming.textContent = hasEarthbound ? '1' : '0';
+    if(upcoming) upcoming.textContent = String(list.length);
+
+    listEl.innerHTML = list.map(function(it){
+      var chip = it.kind === 'confirmed'
+        ? '<span class="chip" style="background:rgba(20,20,20,.08);color:var(--ink);">Confirmed ✓</span>'
+        : '<span class="chip" style="background:rgba(20,20,20,.08);color:var(--ink);">Saved ✓</span>';
+      var clickAttr = it.kind === 'confirmed' ? ' data-open-ticket' : ' data-toast="No ticket needed — just show up."';
+      return '<div class="eyebrow-label" style="margin:20px 0 12px;">'+(it.date || 'Design Week')+'</div>'+
+        '<div class="flex" style="gap:14px;align-items:center;padding:16px;border:1px solid var(--line);border-radius:var(--r-md);cursor:pointer;"'+clickAttr+'>'+
+          '<div class="photo '+(it.photo || 'ph-earthbound')+'" style="width:64px;height:64px;border-radius:8px;flex-shrink:0;"></div>'+
+          '<div class="grow"><div style="font-size:13px;font-weight:600;">'+(it.name || it.id)+'</div>'+
+          '<div style="font-size:11.5px;color:var(--ink-soft);">'+(it.meta || '')+'</div></div>'+
+          (it.district ? '<span class="chip chip-district">'+it.district+'</span>' : '')+
+          chip+
+        '</div>';
+    }).join('');
   }
 
   document.addEventListener('click', function(e){
@@ -1302,21 +1345,37 @@
       if(gotoKey) switchFrame(gotoKey);
       openEventOverlay(openEv.getAttribute('data-open-event'));
       var confirmId = openEv.getAttribute('data-confirm-rsvp');
-      if(confirmId) addToSchedule(confirmId);
+      if(confirmId){
+        addToSchedule(confirmId, {name:'Earthbound — Collective exhibition', meta:'19:00–22:00 · Isola Space', district:'Al Quoz', photo:'ph-earthbound', date:'16 November', kind:'confirmed'});
+      }
       return;
     }
     var promptChip = e.target.closest('[data-prompt]');
     if(promptChip){ e.preventDefault(); sendPrompt(promptChip.getAttribute('data-prompt'), promptChip.textContent); return; }
     var chatCard = e.target.closest('.chat-card[data-place]');
     if(chatCard){ switchFrame('map-desktop'); setTimeout(function(){ showPlace(chatCard.getAttribute('data-place')); }, 50); return; }
-    var scheduleItem = e.target.closest('#scheduleEarthbound');
-    if(scheduleItem){ openTicketOverlay(); return; }
+    var addSched = e.target.closest('[data-add-schedule]');
+    if(addSched){
+      e.preventDefault();
+      addToSchedule(addSched.getAttribute('data-sched-id'), {
+        name: addSched.getAttribute('data-sched-name'),
+        meta: addSched.getAttribute('data-sched-meta'),
+        district: addSched.getAttribute('data-sched-district'),
+        photo: addSched.getAttribute('data-sched-photo'),
+        date: addSched.getAttribute('data-sched-date'),
+        kind: 'free'
+      });
+      showToast('Added to My Schedule.');
+      return;
+    }
     var expCard = e.target.closest('.card[data-exp-card]');
     if(expCard){ openExperiencePanel(expCard); return; }
     var openTut = e.target.closest('[data-open-tutorial]');
     if(openTut){ e.preventDefault(); openTutorial(); return; }
     var closeTut = e.target.closest('[data-close-tutorial]');
     if(closeTut){ e.preventDefault(); closeTutorial(); return; }
+    var tutLink = e.target.closest('[data-tutorial-link]');
+    if(tutLink){ e.preventDefault(); closeTutorial(); switchFrame(tutLink.getAttribute('data-tutorial-link')); return; }
     var tutNext = e.target.closest('[data-tutorial-next]');
     if(tutNext){ e.preventDefault(); if(tutorialStep === TUTORIAL_STEPS - 1) closeTutorial(); else tutorialGoTo(tutorialStep + 1); return; }
     var tutPrev = e.target.closest('[data-tutorial-prev]');
@@ -1363,13 +1422,26 @@
       return;
     }
     var pin = e.target.closest('.pin[data-place]');
-    if(pin){ showPlace(pin.getAttribute('data-place')); return; }
+    if(pin){
+      showPlace(pin.getAttribute('data-place'));
+      document.querySelectorAll('.pin.is-selected').forEach(function(p){ p.classList.remove('is-selected'); });
+      pin.classList.add('is-selected');
+      document.getElementById('mapPanel').classList.add('open');
+      var mps = document.getElementById('mapPanelScrim'); if(mps) mps.classList.add('open');
+      return;
+    }
     var card = e.target.closest('.card[data-place-card]');
     if(card){ openPlacePanel(card); return; }
     var closePanel = e.target.closest('[data-close-panel]');
     if(closePanel){
       document.querySelectorAll('.slide-panel.open').forEach(function(p){ p.classList.remove('open'); });
       document.querySelectorAll('.panel-scrim.open').forEach(function(s){ s.classList.remove('open'); });
+      return;
+    }
+    var closeMapPanel = e.target.closest('[data-close-map-panel]');
+    if(closeMapPanel){
+      document.getElementById('mapPanel').classList.remove('open');
+      var mpScrim = document.getElementById('mapPanelScrim'); if(mpScrim) mpScrim.classList.remove('open');
       return;
     }
     if(!e.target.closest('.cat-dropdown-wrap')){ document.querySelectorAll('.cat-menu.open').forEach(function(m){ m.classList.remove('open'); }); }
@@ -1382,6 +1454,7 @@
   });
 
   showPlace('lawrie');
+  document.querySelector('.pin[data-place="lawrie"]')?.classList.add('is-selected');
   document.querySelectorAll('.frame[data-frame^="map-"]').forEach(function(f){ applyMapFilters(f); });
   document.querySelectorAll('.frame[data-frame^="places-"]').forEach(function(f){ applyPlacesFilters(f); });
   document.querySelectorAll('.frame[data-frame^="experiences-"]').forEach(function(f){ applyExperienceFilters(f); });
