@@ -162,9 +162,13 @@
   .topnav .actions .signin{font-size:13px;color:var(--ink-soft);text-decoration:none;}
   .topnav .actions .signin:hover{color:var(--ink);}
 
-  .mobiletop{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;border-bottom:1px solid var(--line);background:var(--paper);}
-  .mobiletop .word{font-family:var(--font-display);font-size:17px;}
   .icon-btn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-strong);background:var(--paper);cursor:pointer;}
+
+  .hamburger-btn{display:none;width:38px;height:38px;border-radius:50%;align-items:center;justify-content:center;border:1px solid var(--line-strong);background:var(--paper);cursor:pointer;flex-shrink:0;}
+  .hamburger-btn .bar{display:block;width:16px;height:1.5px;background:var(--ink);position:relative;transition:transform .25s var(--ease-spring),opacity .2s var(--ease);}
+  .hamburger-btn .bar::before,.hamburger-btn .bar::after{content:"";position:absolute;left:0;width:16px;height:1.5px;background:var(--ink);transition:transform .25s var(--ease-spring),top .2s var(--ease);}
+  .hamburger-btn .bar::before{top:-5px;}
+  .hamburger-btn .bar::after{top:5px;}
 
   .floating-panel{background:rgba(250,248,245,.92);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:100px;box-shadow:0 6px 20px rgba(20,17,14,.10);position:relative;z-index:15;}
   .switch{width:34px;height:20px;border-radius:100px;background:var(--line-strong);position:relative;cursor:pointer;flex-shrink:0;}
@@ -322,16 +326,40 @@
   .cat-menu-item:hover{background:var(--paper-deep);}
   .cat-menu-item input{accent-color:var(--ink);}
 
-  .mobile-menu{position:absolute;left:0;right:0;top:56px;background:var(--paper);border-bottom:1px solid var(--line);
-    box-shadow:0 16px 30px rgba(20,17,14,.14);display:flex;flex-direction:column;padding:8px;gap:1px;
-    opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .22s var(--ease),transform .22s var(--ease),visibility .22s;z-index:60;}
-  .mobile-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
-  .mobile-menu a{padding:12px 14px;font-size:14px;text-decoration:none;color:var(--ink-soft);border-radius:8px;}
-  .mobile-menu a.mm-current{color:var(--ink);font-weight:600;background:var(--paper-deep);}
-  .mobile-menu a:hover{background:var(--paper-deep);color:var(--ink);}
+  /* ===================== MOBILE NAV OVERLAY (hamburger menu) ===================== */
+  .mobile-nav-overlay{position:fixed;inset:0;z-index:1000;visibility:hidden;pointer-events:none;}
+  .mobile-nav-overlay.open{visibility:visible;pointer-events:auto;}
+  .mobile-nav-overlay .scrim{position:fixed;background:rgba(20,17,14,.4);opacity:0;transition:opacity .35s var(--ease);}
+  .mobile-nav-overlay.open .scrim{opacity:1;}
+  .mobile-nav-panel{
+    position:absolute;top:0;right:0;bottom:0;width:min(86vw,380px);background:var(--paper);
+    box-shadow:-24px 0 60px rgba(20,17,14,.22);display:flex;flex-direction:column;padding:22px 28px 28px;
+    transform:translateX(100%);transition:transform .45s var(--ease-spring);will-change:transform;
+  }
+  .mobile-nav-overlay.open .mobile-nav-panel{transform:translateX(0);}
+  .mobile-nav-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:34px;}
+  .mobile-nav-links{display:flex;flex-direction:column;gap:4px;margin-bottom:auto;}
+  .mobile-nav-links a{
+    font-family:var(--font-display);font-size:27px;letter-spacing:-.01em;text-decoration:none;color:var(--ink-faint);
+    padding:11px 2px;border-bottom:1px solid var(--line);
+    opacity:0;transform:translateX(24px);transition:opacity .4s var(--ease) var(--d,0s),transform .4s var(--ease-spring) var(--d,0s),color .15s var(--ease);
+  }
+  .mobile-nav-overlay.open .mobile-nav-links a{opacity:1;transform:translateX(0);}
+  .mobile-nav-links a:nth-child(1){--d:.08s;}
+  .mobile-nav-links a:nth-child(2){--d:.13s;}
+  .mobile-nav-links a:nth-child(3){--d:.18s;}
+  .mobile-nav-links a:nth-child(4){--d:.23s;}
+  .mobile-nav-links a:nth-child(5){--d:.28s;}
+  .mobile-nav-links a.current{color:var(--ink);}
+  .mobile-nav-links a:active{color:var(--ink);}
+  .mobile-nav-actions{display:flex;flex-direction:column;gap:10px;padding-top:20px;
+    opacity:0;transition:opacity .4s var(--ease) .32s;}
+  .mobile-nav-overlay.open .mobile-nav-actions{opacity:1;}
+  .mobile-nav-actions a{text-align:center;font-size:13.5px;color:var(--ink-soft);text-decoration:none;padding:8px;}
 
   .slide-panel{position:absolute;right:0;top:0;bottom:0;width:420px;background:var(--paper);border-left:1px solid var(--line);
-    box-shadow:-20px 0 40px rgba(20,17,14,.18);overflow-y:auto;transform:translateX(100%);transition:transform .4s var(--ease);z-index:80;}
+    box-shadow:-20px 0 40px rgba(20,17,14,.18);overflow-y:auto;-webkit-overflow-scrolling:touch;
+    transform:translateX(100%);transition:transform .4s var(--ease);will-change:transform;z-index:80;}
   .slide-panel.open{transform:translateX(0);}
   .panel-scrim{background:rgba(20,17,14,.32);opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility .3s;z-index:70;}
   .panel-scrim.open{opacity:1;visibility:visible;}
@@ -396,11 +424,11 @@
     .frame-desktop>div[style*="height:828px"]:not(#mapCanvas){height:auto!important;max-height:none!important;overflow-y:visible!important;}
     .frame-desktop>div>div[style*="height:100%"]{height:auto!important;max-height:none!important;overflow-y:visible!important;}
 
-    .topnav{flex-wrap:wrap;height:auto;padding:12px 12px;row-gap:10px;column-gap:10px;}
+    .topnav{height:56px;padding:0 16px;}
     .topnav .brand .tag{display:none;}
-    .topnav nav{order:3;width:100%;gap:0;justify-content:space-between;overflow-x:visible;}
-    .topnav nav a{white-space:nowrap;font-size:10.8px;padding:4px 0;}
-    .topnav .actions{margin-left:auto;}
+    .topnav nav{display:none;}
+    .topnav .actions{margin-left:auto;gap:10px;}
+    .hamburger-btn{display:flex;order:-1;margin-right:10px;}
     .topnav .actions .signin{display:none;}
     .topnav .actions .btn-primary{padding:9px 16px;font-size:12px;}
 
@@ -419,6 +447,9 @@
     .cat-menu{position:fixed!important;top:auto;left:auto;}
     .legend{display:none;}
     #mapCanvas .floating-panel[style*="right:32px"]{display:none;}
+    #mapCanvas .floating-panel[style*="left:32px"][style*="top:24px"]{
+      left:16px!important;right:16px!important;top:16px!important;max-width:none!important;
+    }
 
     #mapPanel,.slide-panel{width:100%!important;}
     .slide-panel{position:fixed!important;top:0!important;bottom:0!important;height:100vh!important;}
@@ -428,7 +459,8 @@
       position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
       height:64vh!important;max-height:64vh;border-left:none!important;border-top:1px solid var(--line);
       border-radius:18px 18px 0 0!important;box-shadow:0 -14px 34px rgba(20,17,14,.22)!important;
-      transform:translateY(102%);transition:transform .32s var(--ease);z-index:60;
+      -webkit-overflow-scrolling:touch;animation:none!important;
+      transform:translateY(102%);transition:transform .32s var(--ease);will-change:transform;z-index:60;
     }
     #mapPanel.open{transform:translateY(0);}
     #mapPanelClose{display:flex!important;}
@@ -461,6 +493,27 @@
   </div>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div class="mobile-nav-overlay" id="mobileNavOverlay" role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="scrim" data-close-mobile-menu></div>
+  <div class="mobile-nav-panel">
+    <div class="mobile-nav-header">
+      <span style="font-family:var(--font-display);font-size:19px;letter-spacing:-.01em;">Designwhere</span>
+      <button class="icon-btn" data-close-mobile-menu aria-label="Close menu">✕</button>
+    </div>
+    <nav class="mobile-nav-links" id="mobileNavLinks">
+      <a href="#" data-goto="map-desktop">Discover</a>
+      <a href="#" data-goto="places-desktop">Places</a>
+      <a href="#" data-goto="experiences-desktop">Experiences</a>
+      <a href="#" data-goto="concierge-desktop">AI Concierge</a>
+      <a href="#" data-goto="schedule-desktop">My Schedule</a>
+    </nav>
+    <div class="mobile-nav-actions">
+      <a href="#" data-toast="Sign-in arrives in the compliance pass">Log in</a>
+      <button class="btn btn-primary btn-block" data-toast="Sign-up arrives in the compliance pass">Sign up</button>
+    </div>
+  </div>
+</div>
 
 <div class="tutorial-overlay" id="tutorialOverlay" role="dialog" aria-modal="true" aria-label="How Designwhere works">
   <div class="tutorial-card">
@@ -510,6 +563,7 @@
         <!-- ============================================================ -->
         <section class="frame frame-desktop active" data-frame="map-desktop" style="height:900px;">
           <div class="topnav">
+            <button class="hamburger-btn" data-open-mobile-menu aria-label="Open menu"><span class="bar"></span></button>
             <div class="brand"><span class="word">Designwhere</span><span class="tag">Dubai Design Week</span></div>
             <nav>
               <a href="#" class="current" data-goto="map-desktop">Discover</a><a href="#" data-goto="places-desktop">Places</a><a href="#" data-goto="experiences-desktop">Experiences</a><a href="#" data-goto="concierge-desktop">AI Concierge</a><a href="#" data-goto="schedule-desktop">My Schedule</a>
@@ -634,6 +688,7 @@
         <!-- ============================================================ -->
         <section class="frame frame-desktop" data-frame="places-desktop" style="height:900px;">
           <div class="topnav">
+            <button class="hamburger-btn" data-open-mobile-menu aria-label="Open menu"><span class="bar"></span></button>
             <div class="brand"><span class="word">Designwhere</span><span class="tag">Dubai Design Week</span></div>
             <nav><a href="#" data-goto="map-desktop">Discover</a><a href="#" class="current" data-goto="places-desktop">Places</a><a href="#" data-goto="experiences-desktop">Experiences</a><a href="#" data-goto="concierge-desktop">AI Concierge</a><a href="#" data-goto="schedule-desktop">My Schedule</a></nav>
             <div class="actions"><a href="#" class="signin" data-toast="Sign-in arrives in the compliance pass">Log in</a><button class="btn btn-primary" data-toast="Sign-up arrives in the compliance pass">Sign up</button></div>
@@ -740,6 +795,7 @@
         <!-- ============================================================ -->
         <section class="frame frame-desktop" data-frame="experiences-desktop" style="height:900px;">
           <div class="topnav">
+            <button class="hamburger-btn" data-open-mobile-menu aria-label="Open menu"><span class="bar"></span></button>
             <div class="brand"><span class="word">Designwhere</span><span class="tag">Dubai Design Week</span></div>
             <nav><a href="#" data-goto="map-desktop">Discover</a><a href="#" data-goto="places-desktop">Places</a><a href="#" class="current" data-goto="experiences-desktop">Experiences</a><a href="#" data-goto="concierge-desktop">AI Concierge</a><a href="#" data-goto="schedule-desktop">My Schedule</a></nav>
             <div class="actions"><a href="#" class="signin" data-toast="Sign-in arrives in the compliance pass">Log in</a><button class="btn btn-primary" data-toast="Sign-up arrives in the compliance pass">Sign up</button></div>
@@ -819,6 +875,7 @@
         <!-- ============================================================ -->
         <section class="frame frame-desktop" data-frame="concierge-desktop" style="height:900px;">
           <div class="topnav">
+            <button class="hamburger-btn" data-open-mobile-menu aria-label="Open menu"><span class="bar"></span></button>
             <div class="brand"><span class="word">Designwhere</span><span class="tag">Dubai Design Week</span></div>
             <nav><a href="#" data-goto="map-desktop">Discover</a><a href="#" data-goto="places-desktop">Places</a><a href="#" data-goto="experiences-desktop">Experiences</a><a href="#" class="current" data-goto="concierge-desktop">AI Concierge</a><a href="#" data-goto="schedule-desktop">My Schedule</a></nav>
             <div class="actions"><a href="#" class="signin" data-toast="Sign-in arrives in the compliance pass">Log in</a><button class="btn btn-primary" data-toast="Sign-up arrives in the compliance pass">Sign up</button></div>
@@ -856,6 +913,7 @@
         <!-- ============================================================ -->
         <section class="frame frame-desktop" data-frame="schedule-desktop" style="height:900px;">
           <div class="topnav">
+            <button class="hamburger-btn" data-open-mobile-menu aria-label="Open menu"><span class="bar"></span></button>
             <div class="brand"><span class="word">Designwhere</span><span class="tag">Dubai Design Week</span></div>
             <nav><a href="#" data-goto="map-desktop">Discover</a><a href="#" data-goto="places-desktop">Places</a><a href="#" data-goto="experiences-desktop">Experiences</a><a href="#" data-goto="concierge-desktop">AI Concierge</a><a href="#" class="current" data-goto="schedule-desktop">My Schedule</a></nav>
             <div class="actions"><button class="icon-btn" style="border-radius:50%;" data-toast="Account settings arrive in the compliance pass">SA</button></div>
@@ -1167,7 +1225,8 @@
     if(!next) return;
     if(!next.classList.contains('active')){
       document.querySelectorAll('.frame').forEach(function(f){ f.classList.remove('active','enter'); });
-      document.querySelectorAll('.mobile-menu.open,.cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
+      document.querySelectorAll('.cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
+      closeMobileNavMenu();
       next.classList.add('active');
       void next.offsetWidth;
       requestAnimationFrame(function(){ next.classList.add('enter'); });
@@ -1217,6 +1276,18 @@
   function closeTutorial(){
     document.getElementById('tutorialOverlay').classList.remove('open');
     localStorage.setItem('dw_tutorial_seen', '1');
+  }
+
+  // ===================== MOBILE NAV MENU =====================
+  function openMobileNavMenu(){
+    var activeKey = document.querySelector('.frame.active')?.getAttribute('data-frame');
+    document.querySelectorAll('#mobileNavLinks a').forEach(function(a){
+      a.classList.toggle('current', a.getAttribute('data-goto') === activeKey);
+    });
+    document.getElementById('mobileNavOverlay').classList.add('open');
+  }
+  function closeMobileNavMenu(){
+    document.getElementById('mobileNavOverlay').classList.remove('open');
   }
 
   // ===================== EXPERIENCES =====================
@@ -1420,6 +1491,10 @@
     if(openTut){ e.preventDefault(); openTutorial(); return; }
     var closeTut = e.target.closest('[data-close-tutorial]');
     if(closeTut){ e.preventDefault(); closeTutorial(); return; }
+    var openMobNav = e.target.closest('[data-open-mobile-menu]');
+    if(openMobNav){ e.preventDefault(); openMobileNavMenu(); return; }
+    var closeMobNav = e.target.closest('[data-close-mobile-menu]');
+    if(closeMobNav){ e.preventDefault(); closeMobileNavMenu(); return; }
     var tutLink = e.target.closest('[data-tutorial-link]');
     if(tutLink){ e.preventDefault(); closeTutorial(); switchFrame(tutLink.getAttribute('data-tutorial-link')); return; }
     var tutNext = e.target.closest('[data-tutorial-next]');
@@ -1469,7 +1544,7 @@
       var id = menuBtn.getAttribute('data-menu-toggle');
       var menu = document.getElementById(id);
       var wasOpen = menu.classList.contains('open');
-      document.querySelectorAll('.mobile-menu.open,.cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
+      document.querySelectorAll('.cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
       if(!wasOpen){
         menu.classList.add('open');
         // on mobile the menu is position:fixed (its wrapper clips overflow-y for the
@@ -1501,7 +1576,6 @@
       return;
     }
     if(!e.target.closest('.cat-dropdown-wrap')){ document.querySelectorAll('.cat-menu.open').forEach(function(m){ m.classList.remove('open'); }); }
-    if(!e.target.closest('.mobiletop') && !e.target.closest('.mobile-menu')){ document.querySelectorAll('.mobile-menu.open').forEach(function(m){ m.classList.remove('open'); }); }
   });
 
   document.querySelectorAll('#catMenu input[data-cat-filter]').forEach(function(i){ i.addEventListener('change', applyCategoryFilter); });
@@ -1581,7 +1655,7 @@
   // at any viewport width instead of needing separate mobile coordinates. On top of that base
   // fit-to-width scale, mapZoom/mapPanX/mapPanY let users zoom in and pan, like a real map —
   // pins live inside the same scaled wrapper so they zoom/pan with it automatically.
-  var mapBaseScale = 1, mapZoom = 1, mapPanX = 0, mapPanY = 0;
+  var mapBaseScale = 1, mapZoom = 1, mapPanX = 0, mapPanY = 0, mapPanInitialized = false;
   var MAP_ZOOM_MIN = 1, MAP_ZOOM_MAX = 3;
 
   function clampPanAxis(pan, canvasSize, renderedSize){
@@ -1634,10 +1708,19 @@
       var topnav = frame ? frame.querySelector('.topnav') : null;
       var topnavH = topnav ? topnav.getBoundingClientRect().height : 56;
       var availH = Math.max(320, window.innerHeight - topnavH);
-      // a touch bigger than the exact cover fit — at the exact fit, whichever axis is the
-      // tight constraint has zero slack to pan, so panning hits that edge immediately
-      mapBaseScale = Math.max(w / 1440, availH / 828) * 1.25;
+      // noticeably bigger than the exact cover fit — at the exact fit, whichever axis is the
+      // tight constraint has zero slack to pan, so panning hits that edge almost immediately
+      mapBaseScale = Math.max(w / 1440, availH / 828) * 1.7;
       canvas.style.height = Math.round(availH) + 'px';
+      if(!mapPanInitialized){
+        // start centered on the Al Quoz cluster (where the default-selected pin and most
+        // places are) instead of the map's raw top-left corner, so there's room to explore
+        // in every direction from the first screen, not just past whatever corner (0,0) is
+        var canvasRectInit = canvas.getBoundingClientRect();
+        mapPanX = canvasRectInit.width / 2 - 430 * mapBaseScale;
+        mapPanY = canvasRectInit.height / 2 - 770 * mapBaseScale;
+        mapPanInitialized = true;
+      }
     } else {
       mapBaseScale = Math.min(1, w / 1440);
       canvas.style.height = Math.round(828 * mapBaseScale) + 'px';
@@ -1666,6 +1749,8 @@
     var touches = {};
     var lastPinchDist = null, dragStart = null;
     canvas.addEventListener('touchstart', function(e){
+      // let the filter pill handle its own horizontal touch-scroll instead of hijacking it into a map pan
+      if(e.target.closest('.floating-panel')) return;
       if(e.touches.length === 1){
         dragStart = {x:e.touches[0].clientX, y:e.touches[0].clientY, panX:mapPanX, panY:mapPanY};
       } else if(e.touches.length === 2){
