@@ -1625,8 +1625,18 @@
     if(!canvas || !wrap) return;
     var w = canvas.getBoundingClientRect().width;
     var isMobile = window.innerWidth <= 760;
-    mapBaseScale = isMobile ? Math.max(w / 1440, Math.min(1, 440 / 828)) : Math.min(1, w / 1440);
-    canvas.style.height = Math.round(828 * mapBaseScale) + 'px';
+    if(isMobile){
+      // fill the rest of the screen below the topnav — no dead space, no page scroll on this screen
+      var frame = canvas.closest('.frame');
+      var topnav = frame ? frame.querySelector('.topnav') : null;
+      var topnavH = topnav ? topnav.getBoundingClientRect().height : 56;
+      var availH = Math.max(320, window.innerHeight - topnavH);
+      mapBaseScale = Math.max(w / 1440, availH / 828);
+      canvas.style.height = Math.round(availH) + 'px';
+    } else {
+      mapBaseScale = Math.min(1, w / 1440);
+      canvas.style.height = Math.round(828 * mapBaseScale) + 'px';
+    }
     applyMapTransform();
   }
   window.addEventListener('resize', rescaleMap);
