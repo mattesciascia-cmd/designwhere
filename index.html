@@ -1595,12 +1595,15 @@
     if(!canvas || !wrap) return;
     var totalScale = mapBaseScale * mapZoom;
     var canvasRect = canvas.getBoundingClientRect();
-    mapPanX = clampPanAxis(mapPanX, canvasRect.width, 1440 * totalScale);
-    mapPanY = clampPanAxis(mapPanY, canvasRect.height, 828 * totalScale);
+    var renderedW = 1440 * totalScale, renderedH = 828 * totalScale;
+    mapPanX = clampPanAxis(mapPanX, canvasRect.width, renderedW);
+    mapPanY = clampPanAxis(mapPanY, canvasRect.height, renderedH);
     wrap.style.transform = 'translate(' + mapPanX + 'px,' + mapPanY + 'px) scale(' + totalScale + ')';
     // keep every pin's real on-screen tap target at a fixed minimum, however zoomed in/out the map is
     wrap.style.setProperty('--pin-hit', (40 / totalScale) + 'px');
-    canvas.classList.toggle('map-zoomed', mapZoom > MAP_ZOOM_MIN);
+    // grab cursor whenever there's real slack to pan in either direction, not just when manually zoomed
+    var hasPanSlack = renderedW > canvasRect.width + 1 || renderedH > canvasRect.height + 1;
+    canvas.classList.toggle('map-zoomed', hasPanSlack);
   }
 
   function zoomMapTo(newZoom, anchorX, anchorY){
@@ -1631,7 +1634,9 @@
       var topnav = frame ? frame.querySelector('.topnav') : null;
       var topnavH = topnav ? topnav.getBoundingClientRect().height : 56;
       var availH = Math.max(320, window.innerHeight - topnavH);
-      mapBaseScale = Math.max(w / 1440, availH / 828);
+      // a touch bigger than the exact cover fit — at the exact fit, whichever axis is the
+      // tight constraint has zero slack to pan, so panning hits that edge immediately
+      mapBaseScale = Math.max(w / 1440, availH / 828) * 1.25;
       canvas.style.height = Math.round(availH) + 'px';
     } else {
       mapBaseScale = Math.min(1, w / 1440);
@@ -1695,15 +1700,17 @@
       if(e.touches.length < 1) dragStart = null;
     }, {passive:true});
 
-    // mouse drag-to-pan on desktop, only meaningful once zoomed in past the base fit-to-width scale
+    // mouse drag-to-pan — always attempted; clampPanAxis is what actually decides whether
+    // there's any slack to move in (e.g. desktop's exact-fit view at zoom 1 has none, mobile's
+    // cover-fit view does), so gating this on zoom level would block real panning room
     var mouseDragStart = null, mouseDidDrag = false;
     canvas.addEventListener('mousedown', function(e){
-      if(mapZoom > MAP_ZOOM_MIN) e.preventDefault(); // stop native image drag-out/text-selection from hijacking the gesture
+      e.preventDefault(); // stop native image drag-out/text-selection from hijacking the gesture
       mouseDragStart = {x:e.clientX, y:e.clientY, panX:mapPanX, panY:mapPanY};
       mouseDidDrag = false;
     });
     window.addEventListener('mousemove', function(e){
-      if(!mouseDragStart || mapZoom <= MAP_ZOOM_MIN) return;
+      if(!mouseDragStart) return;
       var dx = e.clientX - mouseDragStart.x, dy = e.clientY - mouseDragStart.y;
       if(Math.abs(dx) > 3 || Math.abs(dy) > 3) mouseDidDrag = true;
       if(mouseDidDrag){
@@ -1713,7 +1720,7 @@
       }
     });
     window.addEventListener('mouseup', function(e){
-      if(mouseDragStart && mapZoom > MAP_ZOOM_MIN){
+      if(mouseDragStart){
         // covers the case where a drag jumps straight from mousedown to mouseup with no
         // intermediate mousemove — still pan to the released position, not just clicks
         var dx = e.clientX - mouseDragStart.x, dy = e.clientY - mouseDragStart.y;
