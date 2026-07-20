@@ -179,7 +179,8 @@
   .legend-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
   .pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:5;}
-  .pin .head{width:15px;height:15px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid var(--paper);box-shadow:0 2px 5px rgba(20,17,14,.25);}
+  .pin::before{content:"";position:absolute;top:50%;left:50%;width:var(--pin-hit,40px);height:var(--pin-hit,40px);transform:translate(-50%,-50%);}
+  .pin .head{width:19px;height:19px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid var(--paper);box-shadow:0 2px 5px rgba(20,17,14,.25);}
   .pin.event .head{border-radius:3px;transform:rotate(45deg);}
   .pin-count{
     position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--ink);
@@ -288,7 +289,7 @@
   }
   .pin:hover::after{opacity:1;transform:translateX(-50%) translateY(0);}
   .pin.is-selected{z-index:9;}
-  .pin.is-selected .head{width:21px;height:21px;border-width:3px;box-shadow:0 0 0 6px rgba(20,17,14,.16),0 4px 10px rgba(20,17,14,.4);}
+  .pin.is-selected .head{width:25px;height:25px;border-width:3px;box-shadow:0 0 0 6px rgba(20,17,14,.16),0 4px 10px rgba(20,17,14,.4);}
   .pin.is-selected::after{opacity:1;transform:translateX(-50%) translateY(0);background:var(--ink);}
   @keyframes pinPulse{0%,100%{box-shadow:0 0 0 0 rgba(51,82,60,.35);}50%{box-shadow:0 0 0 9px rgba(51,82,60,0);}}
   .pin.event .head{animation:pinPulse 2.2s ease-in-out infinite;}
@@ -413,7 +414,7 @@
     }
     #mapPanel.open{transform:translateY(0);}
     #mapPanelClose{display:flex!important;}
-    #mapPanelScrim{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;z-index:59;}
+    #mapPanelScrim{display:block!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;z-index:59;}
     .event-overlay aside{width:100%!important;}
     .ticket-card{width:92vw!important;max-width:390px;}
     .tutorial-card{width:88vw;max-width:420px;padding:28px 24px 22px;}
@@ -547,7 +548,7 @@
                 <button class="btn seg-btn" style="padding:7px 14px;font-size:12.5px;background:transparent;">Exhibitions</button>
               </div>
               <div class="cat-dropdown-wrap">
-                <button class="btn btn-ghost" data-menu-toggle="catMenu" style="padding:7px 14px;font-size:12.5px;border-color:var(--line);">Category ▾</button>
+                <button class="btn btn-ghost" data-menu-toggle="catMenu" style="padding:7px 14px;font-size:12.5px;border-color:var(--line);white-space:nowrap;flex-shrink:0;">Category ▾</button>
                 <div class="cat-menu" id="catMenu">
                   <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Creative spaces"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-creative);"></span>Creative spaces</label>
                   <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Design hospitality"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-hospitality);"></span>Design hospitality</label>
@@ -567,6 +568,13 @@
             <!-- list toggle -->
             <button class="btn btn-ghost floating-panel" data-goto="places-desktop" style="position:absolute;right:32px;top:24px;padding:9px 18px;font-size:12.5px;border:none;">☰ List</button>
 
+            <!-- zoom controls -->
+            <div class="floating-panel map-zoom-ctrl" style="position:absolute;left:32px;bottom:24px;display:flex;flex-direction:column;padding:4px;gap:2px;">
+              <button class="icon-btn" data-map-zoom="in" aria-label="Zoom in" style="border:none;background:transparent;">+</button>
+              <div style="height:1px;background:var(--line);margin:0 4px;"></div>
+              <button class="icon-btn" data-map-zoom="out" aria-label="Zoom out" style="border:none;background:transparent;">–</button>
+            </div>
+
             <!-- legend -->
             <div class="legend" style="position:absolute;right:32px;bottom:24px;width:340px;">
               <h4>Categories</h4>
@@ -585,7 +593,7 @@
             </div>
 
             <!-- detail side panel (populated dynamically — click any pin) -->
-            <div class="scrim panel-scrim" id="mapPanelScrim" data-close-map-panel></div>
+            <div class="scrim panel-scrim" id="mapPanelScrim" data-close-map-panel style="display:none;"></div>
             <aside id="mapPanel" style="position:absolute;right:0;top:0;bottom:0;width:400px;background:var(--paper);border-left:1px solid var(--line);box-shadow:-16px 0 32px rgba(20,17,14,.08);overflow-y:auto;">
               <button class="icon-btn" id="mapPanelClose" data-close-map-panel style="display:none;position:absolute;top:14px;right:14px;z-index:3;background:rgba(250,248,245,.9);">✕</button>
               <div class="photo" id="mpPhoto" style="height:220px;">
@@ -1392,6 +1400,12 @@
     if(goto){ e.preventDefault(); switchFrame(goto.getAttribute('data-goto')); return; }
     var toast = e.target.closest('[data-toast]');
     if(toast){ e.preventDefault(); showToast(toast.getAttribute('data-toast')); return; }
+    var mapZoomBtn = e.target.closest('[data-map-zoom]');
+    if(mapZoomBtn){
+      e.preventDefault();
+      zoomMapTo(mapZoom * (mapZoomBtn.getAttribute('data-map-zoom') === 'in' ? 1.4 : 1 / 1.4));
+      return;
+    }
     var sw = e.target.closest('.switch');
     if(sw){
       sw.classList.toggle('on'); sw.setAttribute('aria-checked', sw.classList.contains('on'));
@@ -1460,6 +1474,11 @@
   document.querySelectorAll('.frame[data-frame^="experiences-"]').forEach(function(f){ applyExperienceFilters(f); });
   renderSchedule();
   rescaleMap();
+  // re-measure once the first real layout/paint has happened — on first script execution the
+  // canvas can still report a stale/transitional width (e.g. right after a viewport change),
+  // which would otherwise lock in the wrong map scale for the rest of the session
+  requestAnimationFrame(function(){ requestAnimationFrame(rescaleMap); });
+  setTimeout(rescaleMap, 250);
 
   var chatForm = document.getElementById('chatForm');
   if(chatForm){
@@ -1517,18 +1536,133 @@
 
   // Responsive map scaling — the map's pins/districts are pixel-positioned against a
   // native 1440x828 canvas; scaling the whole wrapper keeps every position perfectly aligned
-  // at any viewport width instead of needing separate mobile coordinates.
+  // at any viewport width instead of needing separate mobile coordinates. On top of that base
+  // fit-to-width scale, mapZoom/mapPanX/mapPanY let users zoom in and pan, like a real map —
+  // pins live inside the same scaled wrapper so they zoom/pan with it automatically.
+  var mapBaseScale = 1, mapZoom = 1, mapPanX = 0, mapPanY = 0;
+  var MAP_ZOOM_MIN = 1, MAP_ZOOM_MAX = 3;
+
+  function clampPanAxis(pan, canvasSize, renderedSize){
+    if(renderedSize <= canvasSize) return (canvasSize - renderedSize) / 2;
+    return Math.min(0, Math.max(canvasSize - renderedSize, pan));
+  }
+
+  function applyMapTransform(){
+    var canvas = document.getElementById('mapCanvas');
+    var wrap = document.getElementById('mapScaleWrap');
+    if(!canvas || !wrap) return;
+    var totalScale = mapBaseScale * mapZoom;
+    var canvasRect = canvas.getBoundingClientRect();
+    mapPanX = clampPanAxis(mapPanX, canvasRect.width, 1440 * totalScale);
+    mapPanY = clampPanAxis(mapPanY, canvasRect.height, 828 * totalScale);
+    wrap.style.transform = 'translate(' + mapPanX + 'px,' + mapPanY + 'px) scale(' + totalScale + ')';
+    // keep every pin's real on-screen tap target at a fixed minimum, however zoomed in/out the map is
+    wrap.style.setProperty('--pin-hit', (40 / totalScale) + 'px');
+  }
+
+  function zoomMapTo(newZoom, anchorX, anchorY){
+    var canvas = document.getElementById('mapCanvas');
+    if(!canvas) return;
+    var canvasRect = canvas.getBoundingClientRect();
+    if(anchorX == null) anchorX = canvasRect.width / 2;
+    if(anchorY == null) anchorY = canvasRect.height / 2;
+    var oldTotal = mapBaseScale * mapZoom;
+    var mapX = (anchorX - mapPanX) / oldTotal;
+    var mapY = (anchorY - mapPanY) / oldTotal;
+    mapZoom = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, newZoom));
+    var newTotal = mapBaseScale * mapZoom;
+    mapPanX = anchorX - mapX * newTotal;
+    mapPanY = anchorY - mapY * newTotal;
+    applyMapTransform();
+  }
+
   function rescaleMap(){
     var canvas = document.getElementById('mapCanvas');
     var wrap = document.getElementById('mapScaleWrap');
     if(!canvas || !wrap) return;
     var w = canvas.getBoundingClientRect().width;
     var isMobile = window.innerWidth <= 760;
-    var scale = isMobile ? Math.max(w / 1440, Math.min(1, 440 / 828)) : Math.min(1, w / 1440);
-    wrap.style.transform = 'scale(' + scale + ')';
-    canvas.style.height = Math.round(828 * scale) + 'px';
+    mapBaseScale = isMobile ? Math.max(w / 1440, Math.min(1, 440 / 828)) : Math.min(1, w / 1440);
+    canvas.style.height = Math.round(828 * mapBaseScale) + 'px';
+    applyMapTransform();
   }
   window.addEventListener('resize', rescaleMap);
+
+  // Zoom controls, mouse-wheel zoom, and touch pinch-zoom/drag-pan
+  (function(){
+    var canvas = document.getElementById('mapCanvas');
+    if(!canvas) return;
+    canvas.addEventListener('wheel', function(e){
+      // require a modifier so a normal page-scroll over the map doesn't get hijacked into a zoom
+      if(!e.ctrlKey && !e.metaKey){
+        if(e.deltaY !== 0) showToast('Use Ctrl/Cmd + scroll to zoom the map');
+        return;
+      }
+      if(mapZoom === MAP_ZOOM_MIN && e.deltaY > 0) return;
+      e.preventDefault();
+      var rect = canvas.getBoundingClientRect();
+      var factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      zoomMapTo(mapZoom * factor, e.clientX - rect.left, e.clientY - rect.top);
+    }, {passive:false});
+
+    var touches = {};
+    var lastPinchDist = null, dragStart = null;
+    canvas.addEventListener('touchstart', function(e){
+      if(e.touches.length === 1){
+        dragStart = {x:e.touches[0].clientX, y:e.touches[0].clientY, panX:mapPanX, panY:mapPanY};
+      } else if(e.touches.length === 2){
+        dragStart = null;
+        var startDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        lastPinchDist = startDist > 10 ? startDist : null;
+      }
+    }, {passive:true});
+    canvas.addEventListener('touchmove', function(e){
+      var rect = canvas.getBoundingClientRect();
+      if(e.touches.length === 1 && dragStart){
+        e.preventDefault();
+        mapPanX = dragStart.panX + (e.touches[0].clientX - dragStart.x);
+        mapPanY = dragStart.panY + (e.touches[0].clientY - dragStart.y);
+        applyMapTransform();
+      } else if(e.touches.length === 2){
+        e.preventDefault();
+        var dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        if(lastPinchDist && dist > 10){
+          // clamp per-event ratio — a real pinch changes gradually across many touchmove events,
+          // never jumps several times over in one tick (guards against stray/synthetic touch events)
+          var ratio = Math.min(1.3, Math.max(1 / 1.3, dist / lastPinchDist));
+          var midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+          var midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+          zoomMapTo(mapZoom * ratio, midX, midY);
+        }
+        lastPinchDist = dist;
+      }
+    }, {passive:false});
+    canvas.addEventListener('touchend', function(e){
+      if(e.touches.length < 2) lastPinchDist = null;
+      if(e.touches.length < 1) dragStart = null;
+    }, {passive:true});
+
+    // mouse drag-to-pan on desktop, only meaningful once zoomed in past the base fit-to-width scale
+    var mouseDragStart = null, mouseDidDrag = false;
+    canvas.addEventListener('mousedown', function(e){
+      mouseDragStart = {x:e.clientX, y:e.clientY, panX:mapPanX, panY:mapPanY};
+      mouseDidDrag = false;
+    });
+    window.addEventListener('mousemove', function(e){
+      if(!mouseDragStart || mapZoom <= MAP_ZOOM_MIN) return;
+      var dx = e.clientX - mouseDragStart.x, dy = e.clientY - mouseDragStart.y;
+      if(Math.abs(dx) > 3 || Math.abs(dy) > 3) mouseDidDrag = true;
+      if(mouseDidDrag){
+        mapPanX = mouseDragStart.panX + dx;
+        mapPanY = mouseDragStart.panY + dy;
+        applyMapTransform();
+      }
+    });
+    window.addEventListener('mouseup', function(){ mouseDragStart = null; });
+    canvas.addEventListener('click', function(e){
+      if(mouseDidDrag){ e.stopPropagation(); mouseDidDrag = false; }
+    }, true);
+  })();
 
   // Preloader
   (function(){
