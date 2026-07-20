@@ -572,9 +572,9 @@
           </div>
 
           <div style="position:relative;height:828px;overflow:hidden;background:#EFE6D6;" id="mapCanvas">
-          <div class="map-scale-wrap" id="mapScaleWrap" style="position:absolute;inset:0;width:1440px;height:828px;transform-origin:top left;">
+          <div class="map-scale-wrap" id="mapScaleWrap" style="position:absolute;inset:0;width:1440px;height:1828px;transform-origin:top left;">
             <!-- real map: OpenStreetMap/CARTO tiles, precisely georeferenced to these districts -->
-            <img src="images/dubai-map.jpg" alt="Map of Dubai showing Al Quoz, Business Bay, DIFC, d3 and Jumeirah" style="position:absolute;inset:0;width:1440px;height:828px;object-fit:cover;-webkit-user-drag:none;user-select:none;" aria-hidden="true" draggable="false" ondragstart="return false;">
+            <img src="images/dubai-map.jpg" alt="Map of Dubai showing Al Quoz, Business Bay, DIFC, d3 and Jumeirah" style="position:absolute;inset:0;width:1440px;height:1828px;object-fit:cover;-webkit-user-drag:none;user-select:none;" aria-hidden="true" draggable="false" ondragstart="return false;">
             <div style="position:absolute;right:10px;bottom:6px;font-size:9px;color:rgba(20,17,14,.45);z-index:2;">© OpenStreetMap contributors © CARTO</div>
 
             <!-- district zones -->
@@ -1651,10 +1651,12 @@
   })();
 
   // Responsive map scaling — the map's pins/districts are pixel-positioned against a
-  // native 1440x828 canvas; scaling the whole wrapper keeps every position perfectly aligned
-  // at any viewport width instead of needing separate mobile coordinates. On top of that base
-  // fit-to-width scale, mapZoom/mapPanX/mapPanY let users zoom in and pan, like a real map —
-  // pins live inside the same scaled wrapper so they zoom/pan with it automatically.
+  // native 1440x1828 canvas (extended south of Al Quoz so there's real territory to pan
+  // into); scaling the whole wrapper keeps every position perfectly aligned at any viewport
+  // size instead of needing separate coordinate sets. On top of that base cover-fit scale,
+  // mapZoom/mapPanX/mapPanY let users zoom in and pan, like a real map — pins live inside
+  // the same scaled wrapper so they zoom/pan with it automatically.
+  var MAP_CONTENT_H = 1828;
   var mapBaseScale = 1, mapZoom = 1, mapPanX = 0, mapPanY = 0, mapPanInitialized = false;
   var MAP_ZOOM_MIN = 1, MAP_ZOOM_MAX = 3;
 
@@ -1669,7 +1671,7 @@
     if(!canvas || !wrap) return;
     var totalScale = mapBaseScale * mapZoom;
     var canvasRect = canvas.getBoundingClientRect();
-    var renderedW = 1440 * totalScale, renderedH = 828 * totalScale;
+    var renderedW = 1440 * totalScale, renderedH = MAP_CONTENT_H * totalScale;
     mapPanX = clampPanAxis(mapPanX, canvasRect.width, renderedW);
     mapPanY = clampPanAxis(mapPanY, canvasRect.height, renderedH);
     wrap.style.transform = 'translate(' + mapPanX + 'px,' + mapPanY + 'px) scale(' + totalScale + ')';
@@ -1702,28 +1704,29 @@
     if(!canvas || !wrap) return;
     var w = canvas.getBoundingClientRect().width;
     var isMobile = window.innerWidth <= 760;
+    var availH;
     if(isMobile){
       // fill the rest of the screen below the topnav — no dead space, no page scroll on this screen
       var frame = canvas.closest('.frame');
       var topnav = frame ? frame.querySelector('.topnav') : null;
       var topnavH = topnav ? topnav.getBoundingClientRect().height : 56;
-      var availH = Math.max(320, window.innerHeight - topnavH);
-      // noticeably bigger than the exact cover fit — at the exact fit, whichever axis is the
-      // tight constraint has zero slack to pan, so panning hits that edge almost immediately
-      mapBaseScale = Math.max(w / 1440, availH / 828) * 1.7;
-      canvas.style.height = Math.round(availH) + 'px';
-      if(!mapPanInitialized){
-        // start centered on the Al Quoz cluster (where the default-selected pin and most
-        // places are) instead of the map's raw top-left corner, so there's room to explore
-        // in every direction from the first screen, not just past whatever corner (0,0) is
-        var canvasRectInit = canvas.getBoundingClientRect();
-        mapPanX = canvasRectInit.width / 2 - 430 * mapBaseScale;
-        mapPanY = canvasRectInit.height / 2 - 770 * mapBaseScale;
-        mapPanInitialized = true;
-      }
+      availH = Math.max(320, window.innerHeight - topnavH);
     } else {
-      mapBaseScale = Math.min(1, w / 1440);
-      canvas.style.height = Math.round(828 * mapBaseScale) + 'px';
+      availH = 828; // the fixed viewport slot desktop's single-screen layout allots the map
+    }
+    // cover-fit (like background-size:cover) plus a modest buffer — at the exact cover fit,
+    // whichever axis is the tight constraint has zero slack to pan, so panning would hit
+    // that edge immediately
+    mapBaseScale = Math.max(w / 1440, availH / MAP_CONTENT_H) * 1.15;
+    canvas.style.height = Math.round(availH) + 'px';
+    if(!mapPanInitialized){
+      // start centered on the Al Quoz cluster (where the default-selected pin and most
+      // places are) instead of the map's raw top-left corner, so there's room to explore
+      // in every direction from the first screen, not just past whatever corner (0,0) is
+      var canvasRectInit = canvas.getBoundingClientRect();
+      mapPanX = canvasRectInit.width / 2 - 430 * mapBaseScale;
+      mapPanY = canvasRectInit.height / 2 - 770 * mapBaseScale;
+      mapPanInitialized = true;
     }
     applyMapTransform();
   }
