@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Designwhere — MVP Mockups</title>
 <style>
   /* ===================== TOKENS ===================== */
@@ -333,7 +333,8 @@
   .mobile-nav-overlay.open .scrim{opacity:1;}
   .mobile-nav-panel{
     position:absolute;top:0;right:0;bottom:0;width:min(86vw,380px);background:var(--paper);
-    box-shadow:-24px 0 60px rgba(20,17,14,.22);display:flex;flex-direction:column;padding:22px 28px 28px;
+    box-shadow:-24px 0 60px rgba(20,17,14,.22);display:flex;flex-direction:column;
+    padding:22px 28px max(28px,env(safe-area-inset-bottom));box-sizing:border-box;
     transform:translateX(100%);transition:transform .45s var(--ease-spring);will-change:transform;
   }
   .mobile-nav-overlay.open .mobile-nav-panel{transform:translateX(0);}
@@ -452,7 +453,12 @@
     }
 
     #mapPanel,.slide-panel{width:100%!important;}
-    .slide-panel{position:fixed!important;top:0!important;bottom:0!important;height:100vh!important;}
+    /* top:0 + bottom:0 alone gives the correct, dynamic viewport height (tracking the browser's
+       toolbar as it shows/hides); adding an explicit height:100vh here over-constrains the box, so
+       per spec bottom:0 gets ignored in favor of the static (toolbar-including) 100vh, which is
+       exactly what let the browser's own UI overlap the panel's bottom content */
+    .slide-panel{position:fixed!important;top:0!important;bottom:0!important;height:auto!important;
+      padding-bottom:max(28px,env(safe-area-inset-bottom))!important;box-sizing:border-box;}
     .event-overlay,.ticket-overlay{position:fixed!important;}
 
     #mapPanel{
@@ -460,6 +466,7 @@
       height:64vh!important;max-height:64vh;border-left:none!important;border-top:1px solid var(--line);
       border-radius:18px 18px 0 0!important;box-shadow:0 -14px 34px rgba(20,17,14,.22)!important;
       -webkit-overflow-scrolling:touch;animation:none!important;
+      padding-bottom:max(24px,env(safe-area-inset-bottom))!important;box-sizing:border-box;
       transform:translateY(102%);transition:transform .32s var(--ease);will-change:transform;z-index:60;
     }
     #mapPanel.open{transform:translateY(0);}
