@@ -325,6 +325,7 @@
   .cat-menu-item{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 8px;border-radius:6px;cursor:pointer;}
   .cat-menu-item:hover{background:var(--paper-deep);}
   .cat-menu-item input{accent-color:var(--ink);}
+  .cat-menu-scrim{display:none;}
 
   /* ===================== MOBILE NAV OVERLAY (hamburger menu) ===================== */
   .mobile-nav-overlay{position:fixed;inset:0;z-index:1000;visibility:hidden;pointer-events:none;}
@@ -429,9 +430,20 @@
     .topnav .brand .tag{display:none;}
     .topnav nav{display:none;}
     .topnav .actions{margin-left:auto;gap:10px;}
-    .hamburger-btn{display:flex;order:-1;margin-right:10px;}
+    .hamburger-btn{display:flex;order:-1;margin-right:10px;width:40px;height:40px;}
+    .hamburger-btn .bar,.hamburger-btn .bar::before,.hamburger-btn .bar::after{width:19px;}
     .topnav .actions .signin{display:none;}
     .topnav .actions .btn-primary{padding:9px 16px;font-size:12px;}
+    .topnav .icon-btn{width:40px;height:40px;}
+
+    /* every standalone tappable icon gets a real 40px target on mobile, with a legible
+       ≥24px glyph inside it — small circular buttons are easy to miss/mistap otherwise */
+    .icon-btn{width:40px;height:40px;font-size:18px;}
+    .info-fab{width:44px;height:44px;font-size:20px;}
+    #mapPanelClose,.mobile-nav-header .icon-btn{width:40px;height:40px;font-size:18px;}
+    .map-zoom-ctrl .icon-btn{width:40px;height:40px;font-size:22px;}
+    .filter-group .accordion-arrow{font-size:24px;line-height:1;}
+    .filter-group-summary{min-height:40px;align-items:center;}
 
     .page-header{padding:24px 20px 12px!important;}
     .page-header h1{font-size:27px!important;}
@@ -445,7 +457,20 @@
        dropping it here keeps #catMenu's fixed positioning truly viewport-relative on mobile */
     .floating-panel{max-width:calc(100% - 100px);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;backdrop-filter:none;background:rgba(250,248,245,.98);}
     .floating-panel::-webkit-scrollbar{display:none;height:0;}
-    .cat-menu{position:fixed!important;top:auto;left:auto;}
+    /* a floating dropdown is easy to lose track of on a small screen — open it as an
+       unmissable bottom sheet instead, the same proven pattern as the map/detail panels */
+    .cat-menu{
+      position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
+      width:100%!important;max-width:none!important;max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+      border-radius:20px 20px 0 0!important;padding:14px 18px max(20px,env(safe-area-inset-bottom))!important;
+      box-shadow:0 -14px 34px rgba(20,17,14,.22)!important;transform:translateY(100%)!important;
+      transition:transform .32s var(--ease)!important;will-change:transform;z-index:200;
+    }
+    .cat-menu.open{transform:translateY(0)!important;}
+    .cat-menu-scrim{display:block;position:fixed;inset:0;background:rgba(20,17,14,.4);
+      opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility .3s;z-index:199;}
+    .cat-menu-scrim.open{opacity:1;visibility:visible;}
+    .cat-menu-item{padding:12px 8px;font-size:14px;}
     .legend{display:none;}
     #mapCanvas .floating-panel[style*="right:32px"]{display:none;}
     #mapCanvas .floating-panel[style*="left:32px"][style*="top:24px"]{
@@ -628,6 +653,7 @@
               </div>
               <div class="cat-dropdown-wrap">
                 <button class="btn btn-ghost" data-menu-toggle="catMenu" style="padding:7px 14px;font-size:12.5px;border-color:var(--line);white-space:nowrap;flex-shrink:0;">Category ▾</button>
+                <div class="scrim cat-menu-scrim" id="catMenuScrim" data-close-cat-menu></div>
                 <div class="cat-menu" id="catMenu">
                   <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Creative spaces"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-creative);"></span>Creative spaces</label>
                   <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Design hospitality"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-hospitality);"></span>Design hospitality</label>
@@ -1552,15 +1578,14 @@
       var menu = document.getElementById(id);
       var wasOpen = menu.classList.contains('open');
       document.querySelectorAll('.cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
+      document.querySelectorAll('.cat-menu-scrim.open').forEach(function(s){ s.classList.remove('open'); });
       if(!wasOpen){
         menu.classList.add('open');
-        // on mobile the menu is position:fixed (its wrapper clips overflow-y for the
-        // horizontal filter scroller), so it needs its position computed from the button
-        if(window.matchMedia('(max-width:760px)').matches){
-          var btnRect = menuBtn.getBoundingClientRect();
-          menu.style.top = (btnRect.bottom + 8) + 'px';
-          menu.style.left = Math.min(btnRect.left, window.innerWidth - menu.offsetWidth - 16) + 'px';
-        } else {
+        var scrim = menuBtn.closest('.cat-dropdown-wrap')?.querySelector('.cat-menu-scrim');
+        if(scrim) scrim.classList.add('open');
+        // on desktop the menu is a small anchored dropdown positioned relative to the button;
+        // on mobile it's a fixed bottom sheet (positioned entirely via CSS), no JS needed
+        if(!window.matchMedia('(max-width:760px)').matches){
           menu.style.top = ''; menu.style.left = '';
         }
       }
@@ -1582,7 +1607,11 @@
       var mpScrim = document.getElementById('mapPanelScrim'); if(mpScrim) mpScrim.classList.remove('open');
       return;
     }
-    if(!e.target.closest('.cat-dropdown-wrap')){ document.querySelectorAll('.cat-menu.open').forEach(function(m){ m.classList.remove('open'); }); }
+    var closeCatMenu = e.target.closest('[data-close-cat-menu]');
+    if(closeCatMenu || !e.target.closest('.cat-dropdown-wrap')){
+      document.querySelectorAll('.cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
+      document.querySelectorAll('.cat-menu-scrim.open').forEach(function(s){ s.classList.remove('open'); });
+    }
   });
 
   document.querySelectorAll('#catMenu input[data-cat-filter]').forEach(function(i){ i.addEventListener('change', applyCategoryFilter); });
