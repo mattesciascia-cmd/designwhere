@@ -1884,8 +1884,12 @@
     var touches = {};
     var lastPinchDist = null, dragStart = null;
     canvas.addEventListener('touchstart', function(e){
-      // let the filter pill handle its own horizontal touch-scroll instead of hijacking it into a map pan
-      if(e.target.closest('.floating-panel')) return;
+      // let the filter pill handle its own horizontal touch-scroll instead of hijacking it into a map pan —
+      // same reasoning for the detail panel/category sheet/legend: they're overlays that live inside
+      // #mapCanvas in the DOM, but a touch that starts on them should scroll THEM, never pan the map
+      // underneath. Without this, dragging to scroll the open place card was being read as a map drag.
+      if(e.target.closest('.floating-panel') || e.target.closest('#mapPanel') ||
+         e.target.closest('.cat-menu') || e.target.closest('.legend')) return;
       if(e.touches.length === 1){
         dragStart = {x:e.touches[0].clientX, y:e.touches[0].clientY, panX:mapPanX, panY:mapPanY};
       } else if(e.touches.length === 2){
