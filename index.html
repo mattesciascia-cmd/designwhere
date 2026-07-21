@@ -197,6 +197,9 @@
   }
 
   .sidebar-filters{width:240px;flex-shrink:0;padding:28px 24px;border-right:1px solid var(--line);}
+  .mobile-filters-trigger{display:none;}
+  .mobile-filters-header{display:none;}
+  .sidebar-filters-scrim{display:none;}
   .sidebar-filters h3{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px;}
   .filter-group{margin:0;}
   .filter-group-summary{
@@ -204,7 +207,8 @@
     font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px;padding:2px 0;
   }
   .filter-group-summary::-webkit-details-marker{display:none;}
-  .filter-group .accordion-arrow{font-size:11px;color:var(--ink-faint);transition:transform .2s var(--ease);flex-shrink:0;}
+  .filter-group .accordion-arrow{display:inline-flex;color:var(--ink-faint);transition:transform .2s var(--ease);flex-shrink:0;}
+  .filter-group .accordion-arrow svg{width:14px;height:14px;display:block;}
   .filter-group:not([open]) .filter-group-summary{margin-bottom:0;}
   .filter-group:not([open]) .accordion-arrow{transform:rotate(-90deg);}
   .cat-row{display:flex;align-items:center;gap:9px;padding:7px 2px;font-size:13px;cursor:pointer;border-radius:6px;}
@@ -442,14 +446,34 @@
     .info-fab{width:44px;height:44px;font-size:20px;}
     #mapPanelClose,.mobile-nav-header .icon-btn{width:40px;height:40px;font-size:18px;}
     .map-zoom-ctrl .icon-btn{width:40px;height:40px;font-size:22px;}
-    .filter-group .accordion-arrow{font-size:24px;line-height:1;}
+    .filter-group .accordion-arrow svg{width:22px;height:22px;}
     .filter-group-summary{min-height:40px;align-items:center;}
+    .cat-row{font-size:14px;padding:11px 4px;gap:12px;max-width:260px;min-height:40px;}
+    .cat-row input[type="checkbox"]{width:20px;height:20px;flex-shrink:0;}
+    .cat-row .dot{width:10px;height:10px;}
+    .cat-row .count{font-size:14px;}
 
     .page-header{padding:24px 20px 12px!important;}
     .page-header h1{font-size:27px!important;}
 
     .page-layout{flex-direction:column;}
-    .sidebar-filters{width:100%!important;border-right:none;border-bottom:1px solid var(--line);padding:16px 20px;}
+    /* treat the category/status filters like the map's Category control on mobile — a single
+       trigger that opens everything as one bottom sheet, instead of a long inline block pushing
+       the results down the page */
+    .mobile-filters-trigger{display:inline-flex!important;align-items:center;gap:6px;}
+    .mobile-filters-header{display:flex!important;align-items:center;justify-content:space-between;margin-bottom:18px;}
+    .sidebar-filters{
+      position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
+      width:100%!important;max-height:78vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+      border-right:none;border-top:1px solid var(--line);border-radius:20px 20px 0 0;
+      background:var(--paper);box-shadow:0 -14px 34px rgba(20,17,14,.22);
+      padding:20px 20px max(20px,env(safe-area-inset-bottom))!important;box-sizing:border-box;
+      transform:translateY(100%);transition:transform .32s var(--ease);will-change:transform;z-index:200;
+    }
+    .sidebar-filters.open{transform:translateY(0);}
+    .sidebar-filters-scrim{display:block;position:fixed;inset:0;background:rgba(20,17,14,.4);
+      opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility .3s;z-index:199;}
+    .sidebar-filters-scrim.open{opacity:1;visibility:visible;}
     .card-grid{grid-template-columns:1fr!important;padding:20px!important;gap:16px!important;}
     .grow{padding:0!important;}
 
@@ -730,12 +754,18 @@
           <div style="height:100%;overflow-y:auto;">
           <div class="page-header" style="padding:36px 40px 16px;">
             <div class="eyebrow-label" data-places-count style="margin-bottom:8px;">48 places across Dubai</div>
-            <h1 style="font-family:var(--font-display);font-size:36px;margin:0;letter-spacing:-.02em;">Places</h1>
+            <h1 style="font-family:var(--font-display);font-size:36px;margin:0 0 12px;letter-spacing:-.02em;">Places</h1>
+            <button class="btn btn-ghost mobile-filters-trigger" data-open-filters>Filters<span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span></button>
           </div>
           <div class="flex page-layout">
+            <div class="scrim sidebar-filters-scrim" data-close-filters></div>
             <div class="sidebar-filters">
+              <div class="mobile-filters-header">
+                <span style="font-family:var(--font-display);font-size:20px;">Filters</span>
+                <button class="icon-btn" data-close-filters aria-label="Close filters">✕</button>
+              </div>
               <details class="filter-group" open>
-                <summary class="filter-group-summary">Category<span class="accordion-arrow">▾</span></summary>
+                <summary class="filter-group-summary">Category<span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span></summary>
                 <label class="cat-row"><input type="checkbox" checked data-cat-filter="Luxury brands"><span class="dot" style="background:var(--cat-luxury);"></span><span class="name">Luxury brands</span><span class="count">4</span></label>
                 <label class="cat-row"><input type="checkbox" checked data-cat-filter="Contemporary design"><span class="dot" style="background:var(--cat-contemporary);"></span><span class="name">Contemporary design</span><span class="count">6</span></label>
                 <label class="cat-row"><input type="checkbox" checked data-cat-filter="Contract furniture"><span class="dot" style="background:var(--cat-contract);"></span><span class="name">Contract furniture</span><span class="count">3</span></label>
@@ -749,7 +779,7 @@
               </details>
               <div style="height:1px;background:var(--line);margin:16px 0;"></div>
               <details class="filter-group" open>
-                <summary class="filter-group-summary">Status<span class="accordion-arrow">▾</span></summary>
+                <summary class="filter-group-summary">Status<span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span></summary>
                 <div class="toggle-row"><span>Open now</span><div class="switch" role="switch" aria-checked="false"><div class="knob"></div></div></div>
                 <div class="toggle-row"><span>Has events on</span><div class="switch" role="switch" aria-checked="false"><div class="knob"></div></div></div>
               </details>
@@ -837,12 +867,18 @@
           <div style="height:100%;overflow-y:auto;">
           <div class="page-header" style="padding:36px 40px 16px;">
             <div class="eyebrow-label" data-experiences-count style="margin-bottom:8px;">3 experiences across Dubai</div>
-            <h1 style="font-family:var(--font-display);font-size:36px;margin:0;letter-spacing:-.02em;">Experiences</h1>
+            <h1 style="font-family:var(--font-display);font-size:36px;margin:0 0 12px;letter-spacing:-.02em;">Experiences</h1>
+            <button class="btn btn-ghost mobile-filters-trigger" data-open-filters>Filters<span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span></button>
           </div>
           <div class="flex page-layout">
+            <div class="scrim sidebar-filters-scrim" data-close-filters></div>
             <div class="sidebar-filters">
+              <div class="mobile-filters-header">
+                <span style="font-family:var(--font-display);font-size:20px;">Filters</span>
+                <button class="icon-btn" data-close-filters aria-label="Close filters">✕</button>
+              </div>
               <details class="filter-group" open>
-                <summary class="filter-group-summary">Type<span class="accordion-arrow">▾</span></summary>
+                <summary class="filter-group-summary">Type<span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span></summary>
                 <label class="cat-row"><input type="checkbox" checked data-exp-type="Studio visit"><span class="dot" style="background:var(--cat-creative);"></span><span class="name">Studio visit</span><span class="count">1</span></label>
                 <label class="cat-row"><input type="checkbox" checked data-exp-type="Home visit"><span class="dot" style="background:var(--cat-insiders);"></span><span class="name">Home visit</span><span class="count">0</span></label>
                 <label class="cat-row"><input type="checkbox" checked data-exp-type="Gathering & community"><span class="dot" style="background:var(--cat-hospitality);"></span><span class="name">Gathering &amp; community</span><span class="count">0</span></label>
@@ -854,14 +890,14 @@
               </details>
               <div style="height:1px;background:var(--line);margin:16px 0;"></div>
               <details class="filter-group" open>
-                <summary class="filter-group-summary">Access<span class="accordion-arrow">▾</span></summary>
+                <summary class="filter-group-summary">Access<span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span></summary>
                 <label class="cat-row"><input type="checkbox" checked data-exp-access="Free"><span class="dot" style="background:var(--cat-hospitality);"></span><span class="name">Free</span><span class="count">1</span></label>
                 <label class="cat-row"><input type="checkbox" checked data-exp-access="Paid"><span class="dot" style="background:var(--cat-material);"></span><span class="name">Paid</span><span class="count">2</span></label>
                 <label class="cat-row"><input type="checkbox" checked data-exp-access="Invite only"><span class="dot" style="background:var(--cat-insiders);"></span><span class="name">Invite only</span><span class="count">0</span></label>
               </details>
               <div style="height:1px;background:var(--line);margin:16px 0;"></div>
               <details class="filter-group" open>
-                <summary class="filter-group-summary">Schedule<span class="accordion-arrow">▾</span></summary>
+                <summary class="filter-group-summary">Schedule<span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span></summary>
                 <div class="toggle-row"><span>Recurring only</span><div class="switch" role="switch" aria-checked="false"><div class="knob"></div></div></div>
               </details>
             </div>
@@ -1258,7 +1294,7 @@
     if(!next) return;
     if(!next.classList.contains('active')){
       document.querySelectorAll('.frame').forEach(function(f){ f.classList.remove('active','enter'); });
-      document.querySelectorAll('.cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
+      document.querySelectorAll('.cat-menu.open,.sidebar-filters.open,.sidebar-filters-scrim.open').forEach(function(m){ m.classList.remove('open'); });
       closeMobileNavMenu();
       next.classList.add('active');
       void next.offsetWidth;
@@ -1528,6 +1564,21 @@
     if(openMobNav){ e.preventDefault(); openMobileNavMenu(); return; }
     var closeMobNav = e.target.closest('[data-close-mobile-menu]');
     if(closeMobNav){ e.preventDefault(); closeMobileNavMenu(); return; }
+    var openFiltersBtn = e.target.closest('[data-open-filters]');
+    if(openFiltersBtn){
+      e.preventDefault();
+      var filtersFrame = openFiltersBtn.closest('.frame');
+      filtersFrame?.querySelector('.sidebar-filters')?.classList.add('open');
+      filtersFrame?.querySelector('.sidebar-filters-scrim')?.classList.add('open');
+      return;
+    }
+    var closeFiltersBtn = e.target.closest('[data-close-filters]');
+    if(closeFiltersBtn){
+      e.preventDefault();
+      document.querySelectorAll('.sidebar-filters.open').forEach(function(s){ s.classList.remove('open'); });
+      document.querySelectorAll('.sidebar-filters-scrim.open').forEach(function(s){ s.classList.remove('open'); });
+      return;
+    }
     var tutLink = e.target.closest('[data-tutorial-link]');
     if(tutLink){ e.preventDefault(); closeTutorial(); switchFrame(tutLink.getAttribute('data-tutorial-link')); return; }
     var tutNext = e.target.closest('[data-tutorial-next]');
