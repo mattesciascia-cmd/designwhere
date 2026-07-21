@@ -343,7 +343,7 @@
   .mobile-nav-panel{
     position:absolute;top:0;right:0;bottom:0;width:min(86vw,380px);background:var(--paper);
     box-shadow:-24px 0 60px rgba(20,17,14,.22);display:flex;flex-direction:column;
-    padding:22px 28px max(28px,env(safe-area-inset-bottom));box-sizing:border-box;
+    padding:22px 28px calc(max(28px,env(safe-area-inset-bottom)) + var(--vv-bottom-gap, 0px));box-sizing:border-box;
     transform:translateX(100%);transition:transform .45s var(--ease-spring);will-change:transform;
   }
   .mobile-nav-overlay.open .mobile-nav-panel{transform:translateX(0);}
@@ -471,7 +471,7 @@
       width:100%!important;max-height:78vh;max-height:78dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
       border-right:none;border-top:1px solid var(--line);border-radius:20px 20px 0 0;
       background:var(--paper);box-shadow:0 -14px 34px rgba(20,17,14,.22);
-      padding:20px 20px max(20px,env(safe-area-inset-bottom))!important;box-sizing:border-box;
+      padding:20px 20px calc(max(20px,env(safe-area-inset-bottom)) + var(--vv-bottom-gap, 0px))!important;box-sizing:border-box;
       transform:translateY(100%);transition:transform .32s var(--ease);will-change:transform;z-index:200;
     }
     .sidebar-filters.open{transform:translateY(0);}
@@ -490,7 +490,7 @@
     .cat-menu{
       position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
       width:100%!important;max-width:none!important;max-height:70vh;max-height:70dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
-      border-radius:20px 20px 0 0!important;padding:14px 18px max(20px,env(safe-area-inset-bottom))!important;
+      border-radius:20px 20px 0 0!important;padding:14px 18px calc(max(20px,env(safe-area-inset-bottom)) + var(--vv-bottom-gap, 0px))!important;
       box-shadow:0 -14px 34px rgba(20,17,14,.22)!important;transform:translateY(100%)!important;
       transition:transform .32s var(--ease)!important;will-change:transform;z-index:200;
     }
@@ -511,7 +511,7 @@
        per spec bottom:0 gets ignored in favor of the static (toolbar-including) 100vh, which is
        exactly what let the browser's own UI overlap the panel's bottom content */
     .slide-panel{position:fixed!important;top:0!important;bottom:0!important;height:auto!important;
-      padding-bottom:max(28px,env(safe-area-inset-bottom))!important;box-sizing:border-box;}
+      padding-bottom:calc(max(28px,env(safe-area-inset-bottom)) + var(--vv-bottom-gap, 0px))!important;box-sizing:border-box;}
     .event-overlay,.ticket-overlay{position:fixed!important;}
 
     #mapPanel{
@@ -519,7 +519,7 @@
       height:64vh!important;height:64dvh!important;max-height:64vh;max-height:64dvh;border-left:none!important;border-top:1px solid var(--line);
       border-radius:18px 18px 0 0!important;box-shadow:0 -14px 34px rgba(20,17,14,.22)!important;
       -webkit-overflow-scrolling:touch;animation:none!important;
-      padding-bottom:max(24px,env(safe-area-inset-bottom))!important;box-sizing:border-box;
+      padding-bottom:calc(max(24px,env(safe-area-inset-bottom)) + var(--vv-bottom-gap, 0px))!important;box-sizing:border-box;
       transform:translateY(102%);transition:transform .32s var(--ease);will-change:transform;z-index:60;
     }
     #mapPanel.open{transform:translateY(0);}
@@ -528,7 +528,7 @@
     .event-overlay aside{width:100%!important;}
     .ticket-card{width:92vw!important;max-width:390px;}
     .tutorial-card{width:88vw;max-width:420px;padding:28px 24px 22px;}
-    .info-fab{right:16px;bottom:16px;}
+    .info-fab{right:16px;bottom:calc(16px + var(--vv-bottom-gap, 0px));}
 
     #chatLog{padding:24px 16px 16px!important;}
     .chat-bubble{max-width:100%;}
@@ -1106,6 +1106,28 @@
 </div>
 
 <script>
+  // Safari's own bottom toolbar (URL bar + tab/share icons) overlays page content instead of
+  // shrinking the layout viewport for it — env(safe-area-inset-bottom) only covers the home-
+  // indicator area, not this, and it isn't reflected in vh/dvh either. window.visualViewport is
+  // the only reliable signal for how much of the screen it's currently covering, so track it live
+  // and expose it as a CSS var that fixed-bottom UI (the info button, sheet padding, etc.) reads.
+  (function(){
+    function updateSafariToolbarGap(){
+      var gap = 0;
+      if(window.visualViewport){
+        gap = Math.max(0, window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop);
+      }
+      document.documentElement.style.setProperty('--vv-bottom-gap', gap + 'px');
+    }
+    updateSafariToolbarGap();
+    if(window.visualViewport){
+      window.visualViewport.addEventListener('resize', updateSafariToolbarGap);
+      window.visualViewport.addEventListener('scroll', updateSafariToolbarGap);
+    }
+    window.addEventListener('resize', updateSafariToolbarGap);
+    window.addEventListener('orientationchange', function(){ setTimeout(updateSafariToolbarGap, 300); });
+  })();
+
   var CATEGORY_META = {
     'Luxury brands': {v:'--cat-luxury', bg:'rgba(110,30,43,.12)'},
     'Contemporary design': {v:'--cat-contemporary', bg:'rgba(36,66,124,.12)'},
