@@ -88,7 +88,7 @@
   .ticket-overlay.open{display:flex;}
   .ticket-overlay .scrim{position:absolute;inset:0;background:rgba(20,17,14,.6);}
   .ticket-card{
-    position:relative;width:390px;max-height:88vh;overflow-y:auto;background:var(--paper);
+    position:relative;width:390px;max-height:88vh;max-height:88dvh;overflow-y:auto;background:var(--paper);
     border-radius:var(--r-md);box-shadow:0 30px 90px rgba(0,0,0,.4);
     opacity:0;transform:translateY(14px) scale(.98);transition:opacity .3s var(--ease),transform .3s var(--ease);
   }
@@ -322,7 +322,11 @@
   .seg-btn{transition:background .2s var(--ease),color .2s var(--ease);}
 
   .cat-dropdown-wrap{position:relative;}
-  .cat-menu{position:absolute;top:calc(100% + 8px);left:0;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);
+  /* position:fixed (not absolute/relative-anchored) — it lives outside .floating-panel now so it
+     isn't trapped by that ancestor's overflow-x:auto (iOS Safari fails to escape position:fixed
+     from a scrollable ancestor's box, unlike desktop browsers); its top/left are computed in JS
+     from the button's real position instead */
+  .cat-menu{position:fixed;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);
     box-shadow:0 14px 34px rgba(20,17,14,.16);padding:10px;width:220px;opacity:0;visibility:hidden;transform:translateY(-6px);
     transition:opacity .2s var(--ease),transform .2s var(--ease),visibility .2s;z-index:50;}
   .cat-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
@@ -408,7 +412,7 @@
   /* ===================== ONBOARDING TUTORIAL ===================== */
   .tutorial-overlay{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;background:rgba(20,17,14,.55);}
   .tutorial-overlay.open{display:flex;}
-  .tutorial-card{width:460px;max-height:86vh;overflow-y:auto;background:var(--paper);border-radius:var(--r-md);box-shadow:0 40px 100px rgba(0,0,0,.4);padding:36px 36px 28px;position:relative;
+  .tutorial-card{width:460px;max-height:86vh;max-height:86dvh;overflow-y:auto;background:var(--paper);border-radius:var(--r-md);box-shadow:0 40px 100px rgba(0,0,0,.4);padding:36px 36px 28px;position:relative;
     opacity:0;transform:translateY(16px) scale(.97);transition:opacity .3s var(--ease),transform .3s var(--ease);}
   .tutorial-overlay.open .tutorial-card{opacity:1;transform:translateY(0) scale(1);}
   .tutorial-step{display:none;}
@@ -464,7 +468,7 @@
     .mobile-filters-header{display:flex!important;align-items:center;justify-content:space-between;margin-bottom:18px;}
     .sidebar-filters{
       position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
-      width:100%!important;max-height:78vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+      width:100%!important;max-height:78vh;max-height:78dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
       border-right:none;border-top:1px solid var(--line);border-radius:20px 20px 0 0;
       background:var(--paper);box-shadow:0 -14px 34px rgba(20,17,14,.22);
       padding:20px 20px max(20px,env(safe-area-inset-bottom))!important;box-sizing:border-box;
@@ -485,7 +489,7 @@
        unmissable bottom sheet instead, the same proven pattern as the map/detail panels */
     .cat-menu{
       position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
-      width:100%!important;max-width:none!important;max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+      width:100%!important;max-width:none!important;max-height:70vh;max-height:70dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
       border-radius:20px 20px 0 0!important;padding:14px 18px max(20px,env(safe-area-inset-bottom))!important;
       box-shadow:0 -14px 34px rgba(20,17,14,.22)!important;transform:translateY(100%)!important;
       transition:transform .32s var(--ease)!important;will-change:transform;z-index:200;
@@ -512,7 +516,7 @@
 
     #mapPanel{
       position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
-      height:64vh!important;max-height:64vh;border-left:none!important;border-top:1px solid var(--line);
+      height:64vh!important;height:64dvh!important;max-height:64vh;max-height:64dvh;border-left:none!important;border-top:1px solid var(--line);
       border-radius:18px 18px 0 0!important;box-shadow:0 -14px 34px rgba(20,17,14,.22)!important;
       -webkit-overflow-scrolling:touch;animation:none!important;
       padding-bottom:max(24px,env(safe-area-inset-bottom))!important;box-sizing:border-box;
@@ -677,21 +681,22 @@
               </div>
               <div class="cat-dropdown-wrap">
                 <button class="btn btn-ghost" data-menu-toggle="catMenu" style="padding:7px 14px;font-size:12.5px;border-color:var(--line);white-space:nowrap;flex-shrink:0;">Category ▾</button>
-                <div class="scrim cat-menu-scrim" id="catMenuScrim" data-close-cat-menu></div>
-                <div class="cat-menu" id="catMenu">
-                  <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Creative spaces"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-creative);"></span>Creative spaces</label>
-                  <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Design hospitality"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-hospitality);"></span>Design hospitality</label>
-                  <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Material & innovation"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-material);"></span>Material &amp; innovation</label>
-                  <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Independent design"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-independent);"></span>Independent design</label>
-                  <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Galleries"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-galleries);"></span>Galleries</label>
-                  <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Contemporary design"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-contemporary);"></span>Contemporary design</label>
-                  <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Insiders"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-insiders);"></span>Insiders</label>
-                </div>
               </div>
               <div class="flex" style="align-items:center;gap:8px;padding:0 10px;border-left:1px solid var(--line);margin-left:4px;">
                 <span style="font-size:12.5px;">Open now</span>
                 <div class="switch on" role="switch" aria-checked="true"><div class="knob"></div></div>
               </div>
+            </div>
+
+            <div class="scrim cat-menu-scrim" id="catMenuScrim" data-close-cat-menu></div>
+            <div class="cat-menu" id="catMenu">
+              <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Creative spaces"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-creative);"></span>Creative spaces</label>
+              <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Design hospitality"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-hospitality);"></span>Design hospitality</label>
+              <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Material & innovation"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-material);"></span>Material &amp; innovation</label>
+              <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Independent design"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-independent);"></span>Independent design</label>
+              <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Galleries"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-galleries);"></span>Galleries</label>
+              <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Contemporary design"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-contemporary);"></span>Contemporary design</label>
+              <label class="cat-menu-item"><input type="checkbox" checked data-cat-filter="Insiders"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--cat-insiders);"></span>Insiders</label>
             </div>
 
             <!-- list toggle -->
@@ -1295,6 +1300,7 @@
     if(!next.classList.contains('active')){
       document.querySelectorAll('.frame').forEach(function(f){ f.classList.remove('active','enter'); });
       document.querySelectorAll('.cat-menu.open,.sidebar-filters.open,.sidebar-filters-scrim.open').forEach(function(m){ m.classList.remove('open'); });
+      restoreSidebarFilters();
       closeMobileNavMenu();
       next.classList.add('active');
       void next.offsetWidth;
@@ -1357,6 +1363,20 @@
   }
   function closeMobileNavMenu(){
     document.getElementById('mobileNavOverlay').classList.remove('open');
+  }
+
+  // puts any temporarily-reparented .sidebar-filters sheets back where they belong in
+  // .page-layout once their close transition has finished, restoring desktop's inline layout
+  function restoreSidebarFilters(){
+    document.querySelectorAll('.sidebar-filters').forEach(function(sf){
+      if(!sf._filtersBookmark) return;
+      setTimeout(function(){
+        if(sf.classList.contains('open')) return; // reopened before the transition finished
+        sf._filtersBookmark.parentNode.insertBefore(sf, sf._filtersBookmark);
+        sf._filtersBookmark.remove();
+        sf._filtersBookmark = null;
+      }, 350);
+    });
   }
 
   // ===================== EXPERIENCES =====================
@@ -1568,8 +1588,21 @@
     if(openFiltersBtn){
       e.preventDefault();
       var filtersFrame = openFiltersBtn.closest('.frame');
-      filtersFrame?.querySelector('.sidebar-filters')?.classList.add('open');
-      filtersFrame?.querySelector('.sidebar-filters-scrim')?.classList.add('open');
+      var sf = filtersFrame?.querySelector('.sidebar-filters');
+      var sfScrim = filtersFrame?.querySelector('.sidebar-filters-scrim');
+      // as a position:fixed bottom sheet on mobile, it needs to escape .page-layout's scrollable
+      // ancestor (iOS Safari fails to anchor fixed elements to the true viewport from inside a
+      // scrolling container) — but on desktop it must stay a normal flex child of .page-layout
+      // for the inline sidebar layout, so only reparent it right before showing it as a sheet,
+      // and put it back exactly where it came from when closed
+      if(sf && !sf._filtersBookmark){
+        sf._filtersBookmark = document.createComment('sidebar-filters-anchor');
+        sf.parentNode.insertBefore(sf._filtersBookmark, sf);
+        filtersFrame.appendChild(sfScrim);
+        filtersFrame.appendChild(sf);
+      }
+      sf?.classList.add('open');
+      sfScrim?.classList.add('open');
       return;
     }
     var closeFiltersBtn = e.target.closest('[data-close-filters]');
@@ -1577,6 +1610,7 @@
       e.preventDefault();
       document.querySelectorAll('.sidebar-filters.open').forEach(function(s){ s.classList.remove('open'); });
       document.querySelectorAll('.sidebar-filters-scrim.open').forEach(function(s){ s.classList.remove('open'); });
+      restoreSidebarFilters();
       return;
     }
     var tutLink = e.target.closest('[data-tutorial-link]');
@@ -1632,13 +1666,14 @@
       document.querySelectorAll('.cat-menu-scrim.open').forEach(function(s){ s.classList.remove('open'); });
       if(!wasOpen){
         menu.classList.add('open');
-        var scrim = menuBtn.closest('.cat-dropdown-wrap')?.querySelector('.cat-menu-scrim');
+        var scrim = document.getElementById('catMenuScrim');
         if(scrim) scrim.classList.add('open');
-        // on desktop the menu is a small anchored dropdown positioned relative to the button;
-        // on mobile it's a fixed bottom sheet (positioned entirely via CSS), no JS needed
-        if(!window.matchMedia('(max-width:760px)').matches){
-          menu.style.top = ''; menu.style.left = '';
-        }
+        // on mobile this is overridden by an !important bottom-sheet rule regardless — computing
+        // it unconditionally is harmless and keeps desktop's small anchored dropdown correct now
+        // that the menu lives outside the filter bar (position:fixed needs a real anchor point)
+        var btnRect = menuBtn.getBoundingClientRect();
+        menu.style.top = (btnRect.bottom + 8) + 'px';
+        menu.style.left = Math.min(btnRect.left, window.innerWidth - menu.offsetWidth - 16) + 'px';
       }
       return;
     }
@@ -1659,7 +1694,7 @@
       return;
     }
     var closeCatMenu = e.target.closest('[data-close-cat-menu]');
-    if(closeCatMenu || !e.target.closest('.cat-dropdown-wrap')){
+    if(closeCatMenu || (!e.target.closest('.cat-dropdown-wrap') && !e.target.closest('.cat-menu'))){
       document.querySelectorAll('.cat-menu.open').forEach(function(m){ m.classList.remove('open'); });
       document.querySelectorAll('.cat-menu-scrim.open').forEach(function(s){ s.classList.remove('open'); });
     }
