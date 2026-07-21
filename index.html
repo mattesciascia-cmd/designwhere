@@ -369,9 +369,13 @@
   .mobile-nav-actions a{text-align:center;font-size:13.5px;color:var(--ink-soft);text-decoration:none;padding:8px;}
 
   .slide-panel{position:absolute;right:0;top:0;bottom:0;width:420px;background:var(--paper);border-left:1px solid var(--line);
-    box-shadow:-20px 0 40px rgba(20,17,14,.18);overflow-y:auto;-webkit-overflow-scrolling:touch;
+    box-shadow:-20px 0 40px rgba(20,17,14,.18);
     transform:translateX(100%);transition:transform .4s var(--ease);will-change:transform;z-index:80;}
   .slide-panel.open{transform:translateX(0);}
+  /* the panel itself never scrolls — only .panel-body-scroll inside it does. That keeps the
+     close button, which lives outside that inner scroller, always in view: it's a sibling of
+     the scrolling content instead of a descendant, so it can never get carried off by it. */
+  .panel-body-scroll{-webkit-overflow-scrolling:touch;}
   .panel-scrim{background:rgba(20,17,14,.32);opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility .3s;z-index:70;}
   .panel-scrim.open{opacity:1;visibility:visible;}
 
@@ -508,36 +512,36 @@
 
     #mapPanel,.slide-panel{width:100%!important;}
     /* Safari's own bottom toolbar floats over content instead of shrinking the viewport for it.
-       Tried: dropping the transform-based slide in favor of an opacity/visibility toggle, on the
-       theory that transform+position:fixed was getting frozen against stale viewport metrics —
-       that broke scrolling entirely on the real device (iOS doesn't reliably arm the momentum-
-       scroll layer on an element whose visibility/opacity was just toggled on, only on one that
-       was already laid out and got moved into view). Reverted: back to the transform-based slide
-       so scrolling keeps working, plus a generous fixed buffer so whatever the toolbar covers is
-       still reachable by scrolling a bit further. */
-    .slide-panel{position:fixed!important;top:0!important;bottom:0!important;height:auto!important;
-      overflow-y:auto!important;-webkit-overflow-scrolling:touch;
-      padding-bottom:calc(120px + env(safe-area-inset-bottom))!important;box-sizing:border-box;}
+       A generous fixed buffer on the scrollable inner wrapper (.panel-body-scroll) means whatever
+       the toolbar covers is still reachable by scrolling a bit further. The close X lives OUTSIDE
+       that inner scroller (a sibling, not a descendant) specifically so it never gets carried off
+       by that scroll — position:fixed/absolute descendants of a scrolling element are supposed to
+       stay put in standard CSS, but in practice (tested directly) they still track the scroll
+       offset here, so the only reliable fix was structural: keep the scrolling contained to a
+       dedicated inner div and never put the close button inside it. */
+    .slide-panel{position:fixed!important;top:0!important;bottom:0!important;height:auto!important;}
+    .slide-panel .panel-body-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;
+      padding-bottom:calc(120px + env(safe-area-inset-bottom));box-sizing:border-box;}
     .event-overlay,.ticket-overlay{position:fixed!important;}
 
     #mapPanel{
       position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;
       height:64vh!important;height:64dvh!important;max-height:64vh;max-height:64dvh;border-left:none!important;border-top:1px solid var(--line);
       border-radius:18px 18px 0 0!important;box-shadow:0 -14px 34px rgba(20,17,14,.22)!important;
-      overflow-y:auto!important;-webkit-overflow-scrolling:touch;animation:none!important;
-      padding-bottom:calc(120px + env(safe-area-inset-bottom))!important;box-sizing:border-box;
+      animation:none!important;
       transform:translateY(102%);transition:transform .32s var(--ease);will-change:transform;z-index:60;
     }
+    #mapPanel .panel-body-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;
+      padding-bottom:calc(120px + env(safe-area-inset-bottom));box-sizing:border-box;}
     #mapPanel.open{transform:translateY(0);}
     #mapPanelClose{display:flex!important;}
     #mapPanelScrim{display:block!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;z-index:59;}
     .event-overlay aside{width:100%!important;}
     .ticket-card{width:92vw!important;max-width:390px;}
     .tutorial-card{width:88vw;max-width:420px;padding:28px 24px 22px;}
-    /* lower, but anchored well above the true bottom edge (a vh-based offset, not a fixed px
-       one) so there's still a real buffer whatever the toolbar is doing, without floating the
-       button at mid-screen */
-    .info-fab{right:16px;top:auto;bottom:calc(16vh + env(safe-area-inset-bottom));transform:none;}
+    /* lower still, but anchored well above the true bottom edge (a vh-based offset, not a fixed px
+       one) so there's still a real buffer whatever the toolbar is doing */
+    .info-fab{right:16px;top:auto;bottom:calc(8vh + env(safe-area-inset-bottom));transform:none;}
     .info-fab:hover{transform:scale(1.08);}
 
     #chatLog{padding:24px 16px 16px!important;}
@@ -738,18 +742,20 @@
 
             <!-- detail side panel (populated dynamically — click any pin) -->
             <div class="scrim panel-scrim" id="mapPanelScrim" data-close-map-panel style="display:none;"></div>
-            <aside id="mapPanel" style="position:absolute;right:0;top:0;bottom:0;width:400px;background:var(--paper);border-left:1px solid var(--line);box-shadow:-16px 0 32px rgba(20,17,14,.08);overflow-y:auto;">
+            <aside id="mapPanel" style="position:absolute;right:0;top:0;bottom:0;width:400px;background:var(--paper);border-left:1px solid var(--line);box-shadow:-16px 0 32px rgba(20,17,14,.08);">
               <button class="icon-btn" id="mapPanelClose" data-close-map-panel style="display:none;position:absolute;top:14px;right:14px;z-index:3;background:rgba(250,248,245,.9);">✕</button>
-              <div class="photo" id="mpPhoto" style="height:220px;">
-                <span class="photo-tag" id="mpTag"></span>
-              </div>
-              <div style="padding:22px 24px;">
-                <div class="chips-row flex" id="mpChips" style="gap:6px;margin-bottom:12px;"></div>
-                <h2 id="mpName" style="font-family:var(--font-display);font-weight:600;font-size:26px;margin:0 0 6px;letter-spacing:-.01em;"></h2>
-                <div id="mpStatus" class="status-open" style="margin-bottom:14px;"></div>
-                <p id="mpDesc" style="font-size:13.5px;line-height:1.65;color:var(--ink-soft);margin:0 0 20px;"></p>
-                <div class="eyebrow-label" style="margin-bottom:10px;">What's on inside</div>
-                <div id="mpInside" class="flex col" style="gap:10px;"></div>
+              <div class="panel-body-scroll" style="height:100%;overflow-y:auto;">
+                <div class="photo" id="mpPhoto" style="height:220px;">
+                  <span class="photo-tag" id="mpTag"></span>
+                </div>
+                <div style="padding:22px 24px;">
+                  <div class="chips-row flex" id="mpChips" style="gap:6px;margin-bottom:12px;"></div>
+                  <h2 id="mpName" style="font-family:var(--font-display);font-weight:600;font-size:26px;margin:0 0 6px;letter-spacing:-.01em;"></h2>
+                  <div id="mpStatus" class="status-open" style="margin-bottom:14px;"></div>
+                  <p id="mpDesc" style="font-size:13.5px;line-height:1.65;color:var(--ink-soft);margin:0 0 20px;"></p>
+                  <div class="eyebrow-label" style="margin-bottom:10px;">What's on inside</div>
+                  <div id="mpInside" class="flex col" style="gap:10px;"></div>
+                </div>
               </div>
             </aside>
           </div>
@@ -853,17 +859,19 @@
           <div class="scrim panel-scrim" data-close-panel></div>
           <aside class="slide-panel" id="placePanel">
             <button class="icon-btn" data-close-panel style="position:absolute;top:16px;right:16px;z-index:2;background:rgba(250,248,245,.85);">✕</button>
-            <div class="photo" id="ppPhoto" style="height:240px;"></div>
-            <div style="padding:24px 26px;">
-              <div class="chips-row flex" id="ppChips" style="gap:6px;margin-bottom:12px;"></div>
-              <h2 id="ppName" style="font-family:var(--font-display);font-weight:600;font-size:26px;margin:0 0 6px;letter-spacing:-.01em;"></h2>
-              <div id="ppStatus" class="status-open" style="margin-bottom:16px;"></div>
-              <p id="ppDesc" style="font-size:13.5px;line-height:1.65;color:var(--ink-soft);margin:0 0 20px;"></p>
-              <div class="eyebrow-label" style="margin-bottom:8px;">Hours</div>
-              <div id="ppHours" style="font-size:13px;margin-bottom:22px;"></div>
-              <div class="eyebrow-label" style="margin-bottom:10px;">What's on inside</div>
-              <div id="ppInside" class="flex col" style="gap:10px;margin-bottom:22px;"></div>
-              <button class="btn btn-ghost btn-block" data-close-panel>Close</button>
+            <div class="panel-body-scroll" style="height:100%;overflow-y:auto;">
+              <div class="photo" id="ppPhoto" style="height:240px;"></div>
+              <div style="padding:24px 26px;">
+                <div class="chips-row flex" id="ppChips" style="gap:6px;margin-bottom:12px;"></div>
+                <h2 id="ppName" style="font-family:var(--font-display);font-weight:600;font-size:26px;margin:0 0 6px;letter-spacing:-.01em;"></h2>
+                <div id="ppStatus" class="status-open" style="margin-bottom:16px;"></div>
+                <p id="ppDesc" style="font-size:13.5px;line-height:1.65;color:var(--ink-soft);margin:0 0 20px;"></p>
+                <div class="eyebrow-label" style="margin-bottom:8px;">Hours</div>
+                <div id="ppHours" style="font-size:13px;margin-bottom:22px;"></div>
+                <div class="eyebrow-label" style="margin-bottom:10px;">What's on inside</div>
+                <div id="ppInside" class="flex col" style="gap:10px;margin-bottom:22px;"></div>
+                <button class="btn btn-ghost btn-block" data-close-panel>Close</button>
+              </div>
             </div>
           </aside>
         </section>
@@ -942,14 +950,16 @@
           <div class="scrim panel-scrim" data-close-panel></div>
           <aside class="slide-panel" id="expPanel">
             <button class="icon-btn" data-close-panel style="position:absolute;top:16px;right:16px;z-index:2;background:rgba(250,248,245,.85);">✕</button>
-            <div class="photo" id="expPhoto" style="height:240px;"></div>
-            <div style="padding:24px 26px;">
-              <div class="chips-row flex" id="expChips" style="gap:6px;margin-bottom:12px;"></div>
-              <h2 id="expName" style="font-family:var(--font-display);font-weight:600;font-size:26px;margin:0 0 6px;letter-spacing:-.01em;"></h2>
-              <div id="expSchedule" style="font-size:13px;color:var(--ink-soft);margin-bottom:16px;"></div>
-              <p id="expDesc" style="font-size:13.5px;line-height:1.65;color:var(--ink-soft);margin:0 0 22px;"></p>
-              <button class="btn btn-primary btn-block" id="expCta" style="padding:14px;margin-bottom:10px;"></button>
-              <button class="btn btn-ghost btn-block" id="expAddSchedule" data-add-schedule style="padding:13px;display:none;">Add to schedule</button>
+            <div class="panel-body-scroll" style="height:100%;overflow-y:auto;">
+              <div class="photo" id="expPhoto" style="height:240px;"></div>
+              <div style="padding:24px 26px;">
+                <div class="chips-row flex" id="expChips" style="gap:6px;margin-bottom:12px;"></div>
+                <h2 id="expName" style="font-family:var(--font-display);font-weight:600;font-size:26px;margin:0 0 6px;letter-spacing:-.01em;"></h2>
+                <div id="expSchedule" style="font-size:13px;color:var(--ink-soft);margin-bottom:16px;"></div>
+                <p id="expDesc" style="font-size:13.5px;line-height:1.65;color:var(--ink-soft);margin:0 0 22px;"></p>
+                <button class="btn btn-primary btn-block" id="expCta" style="padding:14px;margin-bottom:10px;"></button>
+                <button class="btn btn-ghost btn-block" id="expAddSchedule" data-add-schedule style="padding:13px;display:none;">Add to schedule</button>
+              </div>
             </div>
           </aside>
         </section>
